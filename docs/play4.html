@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тур 4. Алгоритм действий и поведение в ЧС</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .stage-title { color: var(--primary-dark); margin-top: 32px; padding-top: 20px; border-top: 2px solid var(--border); }
+    .scenario {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+    }
+    .scenario h3 { margin: 0 0 10px; color: var(--primary-dark); font-size: 17px; }
+    .scenario .situation {
+      background: #f7f9fc; border-left: 4px solid var(--primary);
+      padding: 12px 16px; border-radius: 6px; margin: 10px 0 14px;
+      font-size: 15px;
+    }
+    .step-list { list-style: none; padding: 0; margin: 12px 0; }
+    .step-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; margin: 6px 0;
+      background: #fafbfd; border: 1px solid var(--border);
+      border-radius: 8px; cursor: grab;
+    }
+    .step-item.dragging { opacity: 0.4; }
+    .step-item .drag-handle {
+      font-size: 18px; color: var(--muted);
+      cursor: grab; user-select: none; min-width: 20px; text-align: center;
+    }
+    .step-item .step-text { flex-grow: 1; font-size: 15px; }
+    .step-item .arrows { display: flex; gap: 4px; }
+    .step-item .arrows button {
+      width: 32px; height: 32px; padding: 0;
+      background: #eef1f5; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; font-size: 14px;
+      font-family: inherit;
+    }
+    .step-item .arrows button:hover { background: #e2e7ee; }
+    .step-item .arrows button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .story {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+    }
+    .story h3 { margin: 0 0 8px; color: var(--primary-dark); font-size: 16px; }
+    .story .story-text {
+      background: #fdf6e3; border-left: 4px solid #d4a017;
+      padding: 12px 16px; border-radius: 6px; font-size: 15px;
+      margin-bottom: 12px;
+    }
+    textarea {
+      width: 100%; min-height: 120px; padding: 12px;
+      font-family: inherit; font-size: 15px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      resize: vertical; box-sizing: border-box;
+    }
+    .sticky-submit {
+      position: sticky; bottom: 0;
+      background: rgba(245,247,250,0.95); backdrop-filter: blur(6px);
+      padding: 12px 0; margin-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      z-index: 5;
+    }
+    .ticket { background: #fff; border: 2px solid var(--primary); border-radius: var(--radius); padding: 20px; margin: 20px 0; }
+    .ticket .big { font-size: 32px; font-weight: 800; color: var(--primary-dark); }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">Координационный центр · ЯрГУ им. П.Г. Демидова</div>
+    <h1>Тур 4. Алгоритм действий и поведение в ЧС</h1>
+  </div>
+</header>
+
+<main class="container">
+  <p id="who" style="color: var(--muted); font-size: 14px;"></p>
+
+  <div class="card">
+    <h2>Как играть</h2>
+    <p><b>Этап 1.</b> 5 сценариев. В каждом — расставьте шаги в правильном порядке: <b>что сначала, что потом</b>. Используйте стрелки ← → или перетаскивание.</p>
+    <p><b>Этап 2.</b> 3 истории с ошибками. Напишите: <b>что человек сделал не так</b> и <b>как было бы правильно</b>.</p>
+  </div>
+
+  <h2 class="stage-title">Этап 1. Алгоритм действий</h2>
+  <div id="scenarios"></div>
+
+  <div class="sticky-submit">
+    <span style="font-size:14px; color:var(--muted);" id="progressText">Расставлено: 0 / 5</span>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitAll()">Отправить ответы</button>
+  </div>
+
+  <h2 class="stage-title">Этап 2. Найди ошибку</h2>
+  <div id="stories"></div>
+
+  <div class="card" style="margin-top:20px;">
+    <button class="btn btn-primary" id="submitBtn2" onclick="submitAll()" style="margin-right:10px;">Отправить все ответы</button>
+    <a class="btn btn-secondary" href="menu.html?team=0&token=0" id="backLink">← В меню туров</a>
+  </div>
+
+  <div id="ticketBox"></div>
+</main>
+
+<footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  var teamId = params.get('team');
+  var token  = params.get('token');
+  document.getElementById('backLink').href = 'menu.html?team=' + teamId + '&token=' + token;
+
+  function getTeams() {
+    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
+    catch (e) { return []; }
+  }
+
+  var teamName = 'Команда #' + teamId;
+  if (teamId) {
+    var teams = getTeams();
+    for (var i = 0; i < teams.length; i++) {
+      if (String(teams[i].id) === String(teamId)) { teamName = teams[i].name; break; }
+    }
+  }
+  document.getElementById('who').textContent = teamName;
+
+  // ============ СЦЕНАРИИ ============
+  var scenarios = [
+    {
+      id: 1,
+      title: 'Бесхозная сумка в вузе',
+      situation: 'Ты в коридоре корпуса заметил сумку без хозяина. Она стоит у входа в аудиторию, где через 10 минут начнётся лекция. Вокруг студенты, никто не обращает внимания.',
+      correct: [
+        'Не подходить, не трогать, не открывать',
+        'Отойти на безопасное расстояние и предупредить рядом стоящих',
+        'Сообщить охране, администрации или по номеру 112',
+        'Дождаться прибытия специалистов, не создавая паники',
+        'Если попросят — рассказать, кто и когда мог оставить сумку'
+      ]
+    },
+    {
+      id: 2,
+      title: 'Незнакомец в мессенджере',
+      situation: 'Тебе в Telegram пишет незнакомый человек: «Привет! Есть несложная работа, оплата 20 000 ₽. Нужно передать посылку. Никому не говори. Ответь до вечера».',
+      correct: [
+        'Не отвечать и не соглашаться',
+        'Сделать скриншоты переписки и сохранить их',
+        'Заблокировать аккаунт отправителя',
+        'Рассказать родителям, преподавателю или куратору',
+        'При реальных угрозах — обратиться в полицию'
+      ]
+    },
+    {
+      id: 3,
+      title: 'Друг согласился на «странную подработку»',
+      situation: 'Твой друг рассказал, что нашёл подработку: нужно «просто передать коробку» за 15 000 ₽. Работодатель попросил никому не говорить и не интересоваться, что внутри.',
+      correct: [
+        'Спокойно объяснить другу, что это опасная схема',
+        'Рассказать, чем это может закончиться (вплоть до уголовной ответственности)',
+        'Предложить вместе поговорить со взрослыми или куратором',
+        'Убедить его не соглашаться и не идти на встречу',
+        'При необходимости — обратиться в полицию вместе'
+      ]
+    },
+    {
+      id: 4,
+      title: 'Угрозы в соцсетях',
+      situation: 'Тебе в личные сообщения пишет незнакомый аккаунт: «Мы знаем, где ты живёшь. Тебе лучше молчать». Ты не понимаешь, чем это вызвано.',
+      correct: [
+        'Не отвечать и не вступать в переписку',
+        'Сделать скриншоты: переписка, ник, аватар, дата и время',
+        'Заблокировать аккаунт',
+        'Рассказать родителям или преподавателю, если несовершеннолетний',
+        'Обратиться в полицию, если угрозы реальные или повторяются'
+      ]
+    },
+    {
+      id: 5,
+      title: 'Призыв к насилию в сети',
+      situation: 'В комментариях под постом ты увидел: «Пора действовать! Идём и разбираемся с ними. Кто с нами — пиши в личку». Текст адресован группе людей по национальному признаку.',
+      correct: [
+        'Не отвечать и не вступать в переписку',
+        'Сохранить ссылку и скриншот поста',
+        'Отправить жалобу администрации соцсети',
+        'Сообщить в полицию или на горячую линию',
+        'Предупредить близких, чтобы не втягивались'
+      ]
+    }
+  ];
+
+  var STORIES = [
+    {
+      id: 1,
+      title: 'История 1. «Я просто переслал друзьям»',
+      story: 'Студент увидел в соцсети пост с призывом к насилию против людей другой национальности. Ему показалось это «дичью», и он переслал пост в общий чат группы с подписью: «Смотрите, что творят». Через неделю его вызвали в деканат — пост разошёлся по университету, и его автора искали.',
+      hint: 'Он распространил запрещённый контент, даже из «благих» побуждений. Пересылка — это тоже распространение.'
+    },
+    {
+      id: 2,
+      title: 'История 2. «Я решил разобраться сам»',
+      story: 'Студентке в соцсетях начал писать незнакомец с угрозами. Она ответила ему резко: «Ты кто такой? Приходи, поговорим». Он прислал ей фото её дома и сказал, что «зайдёт вечером». Девушка испугалась, но никому не рассказала — думала, что «справится сама».',
+      hint: 'Она вступила в переписку, не сохранила доказательства заранее, не рассказала взрослым. При реальных угрозах нужно сразу сообщать.'
+    },
+    {
+      id: 3,
+      title: 'История 3. «Я не знал, что внутри»',
+      story: 'Студент согласился на «лёгкую подработку»: за 5000 ₽ отвезти коробку по адресу. Работодатель сказал: «Не открывай, просто передай». В коробке был запрещённый предмет. Студента задержали, и он объяснял, что «просто выполнял задание и не знал».',
+      hint: 'Он согласился передавать закрытую коробку от незнакомца. Это классическая схема вовлечения. Нельзя брать на себя ответственность за то, что не проверено.'
+    }
+  ];
+
+  // Хранилище состояния: для каждого сценария — массив шагов в порядке команды
+  var state = {};
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function renderScenarios() {
+    var box = document.getElementById('scenarios');
+    box.innerHTML = '';
+
+    scenarios.forEach(function(sc) {
+      // Перемешиваем шаги, если ещё не в state
+      if (!state[sc.id]) state[sc.id] = shuffle(sc.correct);
+
+      var html = '<div class="scenario" data-scenario="' + sc.id + '">' +
+        '<h3>Сценарий ' + sc.id + '. ' + sc.title + '</h3>' +
+        '<div class="situation">' + sc.situation + '</div>' +
+        '<p style="font-size:13px; color:var(--muted);">Расставьте шаги в правильном порядке. Что сначала, что потом.</p>' +
+        '<ul class="step-list" id="steps_' + sc.id + '"></ul>' +
+        '</div>';
+      box.insertAdjacentHTML('beforeend', html);
+      renderSteps(sc.id);
+    });
+  }
+
+  function renderSteps(scenarioId) {
+    var list = document.getElementById('steps_' + scenarioId);
+    if (!list) return;
+    var steps = state[scenarioId];
+    list.innerHTML = '';
+
+    steps.forEach(function(step, idx) {
+      var li = document.createElement('li');
+      li.className = 'step-item';
+      li.draggable = true;
+      li.dataset.idx = idx;
+      li.innerHTML =
+        '<span class="drag-handle">☰</span>' +
+        '<span class="step-text">' + (idx + 1) + '. ' + step + '</span>' +
+        '<span class="arrows">' +
+          '<button ' + (idx === 0 ? 'disabled' : '') + ' onclick="moveStep(' + scenarioId + ',' + idx + ',-1)">↑</button>' +
+          '<button ' + (idx === steps.length - 1 ? 'disabled' : '') + ' onclick="moveStep(' + scenarioId + ',' + idx + ',1)">↓</button>' +
+        '</span>';
+
+      // Drag-n-drop (работает на ПК)
+      li.addEventListener('dragstart', function(e) {
+        li.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', idx);
+      });
+      li.addEventListener('dragend', function() { li.classList.remove('dragging'); });
+      li.addEventListener('dragover', function(e) { e.preventDefault(); });
+      li.addEventListener('drop', function(e) {
+        e.preventDefault();
+        var fromIdx = Number(e.dataTransfer.getData('text/plain'));
+        var toIdx = idx;
+        if (fromIdx === toIdx) return;
+        var arr = state[scenarioId];
+        var moved = arr.splice(fromIdx, 1)[0];
+        arr.splice(toIdx, 0, moved);
+        renderSteps(scenarioId);
+      });
+
+      list.appendChild(li);
+    });
+
+    updateProgress();
+  }
+
+  function moveStep(scenarioId, idx, direction) {
+    var arr = state[scenarioId];
+    var newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= arr.length) return;
+    var t = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = t;
+    renderSteps(scenarioId);
+  }
+
+  function updateProgress() {
+    var done = 0;
+    scenarios.forEach(function(sc) {
+      var current = state[sc.id] || [];
+      var correct = sc.correct;
+      var same = current.length === correct.length && current.every(function(v, i) { return v === correct[i]; });
+      if (same) done++;
+    });
+    document.getElementById('progressText').textContent = 'Правильно расставлено: ' + done + ' / ' + scenarios.length;
+  }
+
+  // ============ ИСТОРИИ ============
+  function renderStories() {
+    var box = document.getElementById('stories');
+    box.innerHTML = '';
+    STORIES.forEach(function(st) {
+      var html = '<div class="story">' +
+        '<h3>' + st.title + '</h3>' +
+        '<div class="story-text">' + st.story + '</div>' +
+        '<label for="answer_' + st.id + '"><b>Что здесь не так? Как было бы правильно?</b></label>' +
+        '<textarea id="answer_' + st.id + '" placeholder="Напишите развёрнутый ответ команды..."></textarea>' +
+        '</div>';
+      box.insertAdjacentHTML('beforeend', html);
+    });
+  }
+
+  // ============ ОТПРАВКА ============
+  function submitAll() {
+    // Этап 1: считаем правильные порядки
+    var correctCount = 0;
+    var scenarioResults = {};
+    scenarios.forEach(function(sc) {
+      var current = state[sc.id] || [];
+      var correct = sc.correct;
+      var same = current.length === correct.length && current.every(function(v, i) { return v === correct[i]; });
+      if (same) correctCount++;
+      scenarioResults[sc.id] = { userOrder: current, correct: same };
+    });
+
+    // Этап 2: собираем ответы
+    var storyAnswers = {};
+    var anyFilled = false;
+    STORIES.forEach(function(st) {
+      var el = document.getElementById('answer_' + st.id);
+      var val = el ? el.value.trim() : '';
+      storyAnswers[st.id] = val;
+      if (val.length > 0) anyFilled = true;
+    });
+
+    if (!anyFilled) {
+      if (!confirm('Вы не ответили ни на одну историю этапа 2. Всё равно отправить?')) return;
+    }
+
+    var totalPoints = correctCount * 2; // максимум 10 за этап 1
+
+    var result = {
+      teamId: teamId, teamName: teamName, tour: 4,
+      scenarios: scenarioResults,
+      stories: storyAnswers,
+      stage1Points: totalPoints,
+      stage1Max: scenarios.length * 2,
+      time: new Date().toISOString()
+    };
+    localStorage.setItem('result4_team_' + teamId, JSON.stringify(result));
+
+    document.getElementById('ticketBox').innerHTML =
+      '<div class="ticket" style="margin-top:20px;">' +
+        '<h3>Тур 4 — результаты</h3>' +
+        '<p><b>Команда:</b> ' + teamName + '</p>' +
+        '<p><b>Этап 1 (алгоритмы):</b> <span class="big">' + totalPoints + ' / ' + (scenarios.length * 2) + '</span></p>' +
+        '<p><b>Этап 2 (истории):</b> отправлено на проверку жюри</p>' +
+        '<p style="color:#666; font-size:13px;">Жюри оценит этап 2 и внесёт баллы в общую таблицу.</p>' +
+        '<p style="margin-top:16px;"><a class="btn btn-primary" href="menu.html?team=' + teamId + '&token=' + token + '">← Вернуться в меню туров</a></p>' +
+      '</div>';
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn2').disabled = true;
+    document.getElementById('submitBtn').textContent = 'Отправлено';
+    document.getElementById('submitBtn2').textContent = 'Отправлено';
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  renderScenarios();
+  renderStories();
+  updateProgress();
+</script>
+
+</body>
+</html>
