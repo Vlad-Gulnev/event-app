@@ -6,7 +6,6 @@
   <title>Админка чемпионата</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ====== Страница логина ====== */
     .login-wrap {
       max-width: 420px; margin: 80px auto; padding: 32px;
       background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
@@ -17,7 +16,6 @@
     .login-wrap input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius); box-sizing: border-box; margin-bottom: 12px; }
     .login-err { color: var(--err); font-size: 14px; margin-top: 10px; }
 
-    /* ====== Общие элементы ====== */
     .copy-btn { padding: 4px 10px; font-size: 13px; background: #eef1f5; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: inherit; }
     .copy-btn:hover { background: #e2e7ee; }
     .case-answer { background: #f7f9fc; border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 6px; margin: 8px 0; white-space: pre-wrap; font-size: 15px; }
@@ -33,11 +31,7 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
-    /* ====== Оценка работ Тура 3 ====== */
-    .work-preview {
-      background: #f7f9fc; padding: 16px; border-radius: var(--radius);
-      border: 1px solid var(--border); text-align: center; margin-bottom: 14px;
-    }
+    .work-preview { background: #f7f9fc; padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; margin-bottom: 14px; }
     .work-preview img { max-width: 100%; max-height: 500px; border-radius: 8px; }
     .work-preview video { max-width: 100%; max-height: 500px; border-radius: 8px; }
     .work-preview iframe { width: 100%; height: 500px; border-radius: 8px; border: 1px solid var(--border); }
@@ -47,11 +41,27 @@
     .work-meta { font-size: 13px; color: var(--muted); }
     .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .score-live { font-size: 15px; font-weight: 700; color: var(--primary-dark); }
+
+    .story-hint {
+      font-size: 13px;
+      background: #fff8e1;
+      border-left: 4px solid #d4a017;
+      padding: 10px 14px; border-radius: 6px;
+      margin: 6px 0 12px;
+      color: #664d03;
+    }
+    .order-list { list-style: none; padding: 0; margin: 8px 0; counter-reset: item; }
+    .order-list li {
+      padding: 8px 12px; margin: 4px 0;
+      background: #f7f9fc; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 14px;
+    }
+    .order-list li.ok { background: #e6f4ea; border-color: #b8dfc2; }
+    .order-list li.err { background: #fdecec; border-color: #f4c5c5; }
   </style>
 </head>
 <body>
 
-<!-- ============== ЭКРАН ЛОГИНА ============== -->
 <div id="loginScreen" class="login-wrap">
   <h1>Вход в админку</h1>
   <p>Только для организаторов чемпионата</p>
@@ -60,7 +70,6 @@
   <div class="login-err" id="loginErr"></div>
 </div>
 
-<!-- ============== ОСНОВНОЙ ИНТЕРФЕЙС ============== -->
 <div id="adminApp" style="display:none;">
 
 <header class="site-header">
@@ -87,6 +96,7 @@
     <button class="tab-btn" data-tab="tab-tour1" onclick="switchTab('tab-tour1', this)">Тур 1</button>
     <button class="tab-btn" data-tab="tab-tour2" onclick="switchTab('tab-tour2', this)">Тур 2</button>
     <button class="tab-btn" data-tab="tab-tour3" onclick="switchTab('tab-tour3', this)">Тур 3</button>
+    <button class="tab-btn" data-tab="tab-tour4" onclick="switchTab('tab-tour4', this)">Тур 4</button>
     <button class="tab-btn" data-tab="tab-summary" onclick="switchTab('tab-summary', this)">Сводка</button>
   </div>
 
@@ -129,10 +139,24 @@
   <div class="tab-pane" id="tab-tour3">
     <div class="card">
       <h2>Тур 3. Контент-баттл — оценка работ</h2>
-      <p style="color: var(--muted); font-size: 14px;">Выберите команду, посмотрите работу, поставьте баллы по критериям (0–3 / 0–3 / 0–3 / 0–1 = макс. 10).</p>
+      <p style="color: var(--muted); font-size: 14px;">Выберите команду, посмотрите работу, поставьте баллы (0–3 / 0–3 / 0–3 / 0–1 = макс. 10).</p>
       <label for="workSelect"><b>Команда:</b></label>
       <select id="workSelect" onchange="showWork()" style="max-width: 400px; margin-bottom: 12px;"></select>
       <div id="workPreview">Загрузка...</div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-tour4">
+    <div class="card">
+      <h2>Тур 4. Алгоритм действий и поведение в ЧС</h2>
+      <p style="color: var(--muted); font-size: 14px;">
+        Этап 1 (сценарии) — авто, 2 балла за каждый = 10 баллов.<br>
+        Этап 2 (истории) — жюри: за каждую историю 0–2 «замечена ошибка» + 0–2 «правильное действие» = макс. 4. Итого за 3 истории — 12.<br>
+        Максимум за Тур 4 — 22 балла.
+      </p>
+      <label for="tour4Select"><b>Команда:</b></label>
+      <select id="tour4Select" onchange="showTour4()" style="max-width: 400px; margin-bottom: 12px;"></select>
+      <div id="tour4Preview">Загрузка...</div>
     </div>
   </div>
 
@@ -144,7 +168,7 @@
           <tr>
             <th>#</th><th>Команда</th>
             <th>Т1 квиз</th><th>Т1 кейс</th><th>Т1 итого</th>
-            <th>Т2</th><th>Т3</th><th>Общий итог</th>
+            <th>Т2</th><th>Т3</th><th>Т4</th><th>Общий итог</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -156,23 +180,15 @@
 
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 </div><!-- /adminApp -->
-
 <script>
   // ================= ЛОГИН =================
-  // Пароль KBU3 + соль. В исходнике виден только хэш.
   var SALT = 'yargu-centre-2026-';
-  var PASS_HASH = null; // вычисляется ниже через простой хэш
-
-  // Простая функция хэширования (djb2). Не криптография, но и не открытый пароль.
   function simpleHash(str) {
-    var hash = 5381;
-    for (var i = 0; i < str.length; i++) {
-      hash = ((hash << 5) + hash) + str.charCodeAt(i);
-      hash = hash & hash;
-    }
-    return (hash >>> 0).toString(16);
+    var h = 5381;
+    for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & h; }
+    return (h >>> 0).toString(16);
   }
-  PASS_HASH = simpleHash(SALT + 'KBU3');
+  var PASS_HASH = simpleHash(SALT + 'KBU3');
 
   function tryLogin() {
     var input = document.getElementById('passInput').value;
@@ -183,11 +199,7 @@
       document.getElementById('loginErr').textContent = 'Неверный пароль';
     }
   }
-
-  function logout() {
-    sessionStorage.removeItem('admin_ok');
-    location.reload();
-  }
+  function logout() { sessionStorage.removeItem('admin_ok'); location.reload(); }
 
   function showAdmin() {
     document.getElementById('loginScreen').style.display = 'none';
@@ -196,7 +208,6 @@
     setInterval(load, 5000);
   }
 
-  // Если уже залогинен — показываем админку сразу
   if (sessionStorage.getItem('admin_ok') === '1') {
     showAdmin();
   } else {
@@ -219,11 +230,9 @@
     try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
     catch (e) { return []; }
   }
-
   function baseUrl() {
     var loc = window.location;
-    var path = loc.pathname.replace(/\/[^\/]*$/, '/');
-    return loc.origin + path;
+    return loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/');
   }
 
   // ================= КОМАНДЫ =================
@@ -246,7 +255,6 @@
       tbody.appendChild(tr);
     });
   }
-
   function copyLink(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function(){ alert('Скопировано'); }, function(){ fallbackCopy(text); });
@@ -254,7 +262,7 @@
   }
   function fallbackCopy(text) {
     var ta = document.createElement('textarea');
-    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); alert('Скопировано'); } catch (e) { prompt('Скопируйте:', text); }
     document.body.removeChild(ta);
@@ -292,7 +300,6 @@
       var caseData = null;
       try { caseData = JSON.parse(localStorage.getItem('case_team_' + t.id) || 'null'); } catch (e) {}
       var parts = (localStorage.getItem('case_score_' + t.id) || '0,0,0').split(',').map(Number);
-
       var html = '<div class="case-block">' +
         '<h4>Команда: ' + t.name + '</h4>' +
         '<p><b>Кейс:</b> ' + (caseData ? caseData.caseTitle : (CASES_META[t.caseId] || '—')) + '</p>';
@@ -314,7 +321,6 @@
       box.insertAdjacentHTML('beforeend', html);
     });
   }
-
   function saveScore(teamId) {
     var c1 = Math.max(0, Math.min(2, Number(document.getElementById('c1_' + teamId).value) || 0));
     var c2 = Math.max(0, Math.min(2, Number(document.getElementById('c2_' + teamId).value) || 0));
@@ -355,10 +361,7 @@
     var prev = sel.value;
     sel.innerHTML = '';
     if (teams.length === 0) {
-      var opt = document.createElement('option');
-      opt.textContent = '— нет команд —';
-      sel.appendChild(opt);
-      return;
+      var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return;
     }
     teams.forEach(function(t) {
       var has = false;
@@ -375,28 +378,17 @@
     var teamId = document.getElementById('workSelect').value;
     var box = document.getElementById('workPreview');
     if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
-
     var data = null;
     try { data = JSON.parse(localStorage.getItem('result3_team_' + teamId) || 'null'); } catch (e) {}
-    if (!data) {
-      box.innerHTML = '<div class="case-block"><p>Команда ещё не загрузила работу.</p></div>';
-      return;
-    }
-
+    if (!data) { box.innerHTML = '<div class="case-block"><p>Команда ещё не загрузила работу.</p></div>'; return; }
     var scores = (localStorage.getItem('score3_team_' + teamId) || '0,0,0,0').split(',').map(Number);
-
     var previewHtml = '';
     if (data.fileUrl) {
       var ext = (data.fileUrl.split('.').pop() || '').toLowerCase();
-      if (['jpg','jpeg','png','webp','gif'].indexOf(ext) !== -1) {
-        previewHtml = '<img src="' + data.fileUrl + '" alt="work">';
-      } else if (ext === 'mp4' || ext === 'webm') {
-        previewHtml = '<video src="' + data.fileUrl + '" controls></video>';
-      } else if (ext === 'pdf') {
-        previewHtml = '<iframe src="' + data.fileUrl + '"></iframe>';
-      } else {
-        previewHtml = '<p><a class="work-link" href="' + data.fileUrl + '" target="_blank">' + data.fileUrl + '</a></p>';
-      }
+      if (['jpg','jpeg','png','webp','gif'].indexOf(ext) !== -1) previewHtml = '<img src="' + data.fileUrl + '" alt="work">';
+      else if (ext === 'mp4' || ext === 'webm') previewHtml = '<video src="' + data.fileUrl + '" controls></video>';
+      else if (ext === 'pdf') previewHtml = '<iframe src="' + data.fileUrl + '"></iframe>';
+      else previewHtml = '<p><a class="work-link" href="' + data.fileUrl + '" target="_blank">' + data.fileUrl + '</a></p>';
     } else if (data.link) {
       var link = data.link;
       if (/t\.me|vk\.com|youtube\.com|youtu\.be/i.test(link)) {
@@ -408,9 +400,7 @@
         previewHtml = '<p class="work-link"><a href="' + link + '" target="_blank">' + link + '</a></p>';
       }
     }
-
     var sum = scores.reduce(function(a, b) { return a + b; }, 0);
-
     box.innerHTML =
       '<div class="case-block">' +
         '<div class="work-header">' +
@@ -421,26 +411,17 @@
           '</div>' +
           '<div class="score-live" id="scoreLive_' + teamId + '">Итог: ' + sum + ' / 10</div>' +
         '</div>' +
-
         '<p><b>Описание работы:</b></p>' +
         '<div class="case-answer">' + (data.description || '').replace(/</g, '&lt;') + '</div>' +
-
         '<p style="margin-top:14px;"><b>Работа:</b></p>' +
         '<div class="work-preview">' + previewHtml + '</div>' +
-
-        '<p class="criteria-list"><b>Критерии оценки:</b><br>' +
-          '1) Понятность — 0–3<br>' +
-          '2) Точность — 0–3<br>' +
-          '3) Оригинальность — 0–3<br>' +
-          '4) Соответствие теме — 0–1</p>' +
-
+        '<p class="criteria-list"><b>Критерии:</b> 1) Понятность 0–3; 2) Точность 0–3; 3) Оригинальность 0–3; 4) Соответствие теме 0–1</p>' +
         '<div class="score-row">' +
           '<label>Понятность: <input type="number" min="0" max="3" id="w1_' + teamId + '" value="' + (scores[0] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
           '<label>Точность: <input type="number" min="0" max="3" id="w2_' + teamId + '" value="' + (scores[1] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
           '<label>Оригинальность: <input type="number" min="0" max="3" id="w3_' + teamId + '" value="' + (scores[2] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
           '<label>Соответствие: <input type="number" min="0" max="1" id="w4_' + teamId + '" value="' + (scores[3] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
         '</div>' +
-
         '<div class="nav-buttons">' +
           '<button class="btn btn-primary" onclick="saveWorkScore(' + teamId + ')">Сохранить оценку</button>' +
           '<button class="btn btn-secondary" onclick="nextWork()">Следующая команда →</button>' +
@@ -448,16 +429,14 @@
         '</div>' +
       '</div>';
   }
-
   function updateWorkSum(teamId) {
     var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
     var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
     var c3 = Math.max(0, Math.min(3, Number(document.getElementById('w3_' + teamId).value) || 0));
     var c4 = Math.max(0, Math.min(1, Number(document.getElementById('w4_' + teamId).value) || 0));
-    var live = document.getElementById('scoreLive_' + teamId);
-    if (live) live.textContent = 'Итог: ' + (c1 + c2 + c3 + c4) + ' / 10';
+    var el = document.getElementById('scoreLive_' + teamId);
+    if (el) el.textContent = 'Итог: ' + (c1 + c2 + c3 + c4) + ' / 10';
   }
-
   function saveWorkScore(teamId) {
     var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
     var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
@@ -468,7 +447,6 @@
     if (lbl) { lbl.textContent = 'Сохранено: ' + (c1 + c2 + c3 + c4) + ' / 10'; setTimeout(function() { lbl.textContent = ''; }, 3000); }
     loadSummary();
   }
-
   function nextWork() {
     var sel = document.getElementById('workSelect');
     if (sel.selectedIndex < sel.options.length - 1) {
@@ -477,6 +455,119 @@
     } else {
       alert('Это последняя команда в списке.');
     }
+  }
+
+  // ================= ТУР 4 =================
+  function fillTour4Select() {
+    var teams = getTeams();
+    var sel = document.getElementById('tour4Select');
+    var prev = sel.value;
+    sel.innerHTML = '';
+    if (teams.length === 0) {
+      var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return;
+    }
+    teams.forEach(function(t) {
+      var has = false;
+      try { has = !!JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+      var opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name + (has ? ' ✓' : ' — нет ответов');
+      sel.appendChild(opt);
+    });
+    if (prev) sel.value = prev;
+  }
+
+  function showTour4() {
+    var teamId = document.getElementById('tour4Select').value;
+    var box = document.getElementById('tour4Preview');
+    if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem('result4_team_' + teamId) || 'null'); } catch (e) {}
+    if (!data) { box.innerHTML = '<div class="case-block"><p>Команда ещё не отправила ответы.</p></div>'; return; }
+
+    // Этап 1: сценарии
+    var scenariosHtml = '<h4 style="margin-top:0;">Этап 1. Алгоритмы действий</h4>' +
+      '<p style="color:var(--muted); font-size:13px;">Авто-оценка: ' + data.stage1Points + ' / ' + data.stage1Max + '</p>';
+
+    var scenIds = Object.keys(data.scenarios || {});
+    scenIds.forEach(function(sid) {
+      var s = data.scenarios[sid];
+      scenariosHtml += '<div class="case-block">' +
+        '<p><b>Сценарий ' + sid + ':</b> ' +
+        (s.correct ? '<span class="badge ok">порядок верный ✓</span>' : '<span class="badge err">есть ошибки</span>') +
+        '</p>' +
+        '<p style="font-size:13px; color:var(--muted);">Порядок от команды:</p>' +
+        '<ol class="order-list">';
+      (s.userOrder || []).forEach(function(step) {
+        scenariosHtml += '<li>' + step + '</li>';
+      });
+      scenariosHtml += '</ol></div>';
+    });
+
+    // Этап 2: истории
+    var storiesHtml = '<h4 style="margin-top:20px;">Этап 2. «Найди ошибку» (оценка жюри)</h4>' +
+      '<p style="color:var(--muted); font-size:13px;">За каждую историю: 0–2 «замечена ошибка» + 0–2 «правильное действие» = макс. 4. Итого макс. 12.</p>';
+
+    var STORY_HINTS = {
+      1: 'Пересылка запрещённого контента — тоже распространение. Правильно: не пересылать, сохранить скриншот, сообщить куратору.',
+      2: 'Не вступать в переписку, сохранить скриншоты, рассказать родителям/куратору, обратиться в полицию при реальных угрозах. «Разобраться самому» — опасно.',
+      3: 'Нельзя брать закрытую посылку от незнакомца. Правильно: отказаться, сообщить старшим, при реальном предложении — в полицию.'
+    };
+
+    var storyIds = Object.keys(data.stories || {});
+    storyIds.forEach(function(sid) {
+      var scores4 = (localStorage.getItem('story4_' + teamId + '_' + sid) || '0,0').split(',').map(Number);
+      storiesHtml += '<div class="case-block">' +
+        '<h4>История ' + sid + '</h4>' +
+        '<p style="font-size:13px; color:var(--muted);"><b>Ответ команды:</b></p>' +
+        '<div class="case-answer">' + ((data.stories[sid] || '(пусто)').replace(/</g, '&lt;')) + '</div>' +
+        '<div class="story-hint"><b>Подсказка жюри:</b> ' + (STORY_HINTS[sid] || '') + '</div>' +
+        '<div class="score-row">' +
+          '<label>Замечена ошибка (0–2): <input type="number" min="0" max="2" id="s4a_' + sid + '_' + teamId + '" value="' + (scores4[0] || 0) + '"></label>' +
+          '<label>Правильное действие (0–2): <input type="number" min="0" max="2" id="s4b_' + sid + '_' + teamId + '" value="' + (scores4[1] || 0) + '"></label>' +
+        '</div>' +
+        '</div>';
+    });
+
+    storiesHtml += '<div class="nav-buttons">' +
+      '<button class="btn btn-primary" onclick="saveTour4Score(' + teamId + ',' + storyIds.length + ')">Сохранить оценку этапа 2</button>' +
+      '<button class="btn btn-secondary" onclick="nextTour4()">Следующая команда →</button>' +
+      '<span id="savedTour4_' + teamId + '" style="color:var(--ok); font-weight:600;"></span>' +
+      '</div>';
+
+    box.innerHTML = scenariosHtml + storiesHtml;
+  }
+
+  function saveTour4Score(teamId, storyCount) {
+    var total = 0;
+    for (var i = 1; i <= storyCount; i++) {
+      var a = Math.max(0, Math.min(2, Number(document.getElementById('s4a_' + i + '_' + teamId).value) || 0));
+      var b = Math.max(0, Math.min(2, Number(document.getElementById('s4b_' + i + '_' + teamId).value) || 0));
+      localStorage.setItem('story4_' + teamId + '_' + i, a + ',' + b);
+      total += a + b;
+    }
+    var lbl = document.getElementById('savedTour4_' + teamId);
+    if (lbl) { lbl.textContent = 'Сохранено: ' + total + ' / 12'; setTimeout(function() { lbl.textContent = ''; }, 3000); }
+    loadSummary();
+  }
+
+  function nextTour4() {
+    var sel = document.getElementById('tour4Select');
+    if (sel.selectedIndex < sel.options.length - 1) {
+      sel.selectedIndex = sel.selectedIndex + 1;
+      showTour4();
+    } else {
+      alert('Это последняя команда в списке.');
+    }
+  }
+
+  function getTour4StoryPoints(teamId) {
+    var total = 0;
+    for (var i = 1; i <= 3; i++) {
+      var s = localStorage.getItem('story4_' + teamId + '_' + i);
+      if (s) total += s.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
+    }
+    return total;
   }
 
   // ================= СВОДКА =================
@@ -499,14 +590,20 @@
       var s3 = localStorage.getItem('score3_team_' + t.id);
       if (s3) ts = s3.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
 
-      return { name: t.name, quiz: quiz, caseScore: cs, t1Total: quiz + cs, tour2: tour2, tour3: ts, grandTotal: quiz + cs + tour2 + ts };
+      var t4 = null;
+      try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+      var tour4Auto = t4 ? (t4.stage1Points || 0) : 0;
+      var tour4Manual = getTour4StoryPoints(t.id);
+      var tour4 = tour4Auto + tour4Manual;
+
+      return { name: t.name, quiz: quiz, caseScore: cs, t1Total: quiz + cs, tour2: tour2, tour3: ts, tour4: tour4, grandTotal: quiz + cs + tour2 + ts + tour4 };
     });
 
     rows.sort(function(a, b) { return b.grandTotal - a.grandTotal; });
 
     var tbody = document.querySelector('#tbl tbody');
     tbody.innerHTML = '';
-    if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8">Нет команд.</td></tr>'; return; }
+    if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9">Нет команд.</td></tr>'; return; }
     rows.forEach(function(r, i) {
       var tr = document.createElement('tr');
       if (i === 0 && rows.length > 1 && r.grandTotal > 0) tr.className = 'leader';
@@ -518,7 +615,8 @@
         '<td><b>' + r.t1Total + ' / 35</b></td>' +
         '<td>' + r.tour2 + ' / 8</td>' +
         '<td>' + r.tour3 + ' / 10</td>' +
-        '<td><b>' + r.grandTotal + ' / 53</b></td>';
+        '<td>' + r.tour4 + ' / 22</td>' +
+        '<td><b>' + r.grandTotal + ' / 75</b></td>';
       tbody.appendChild(tr);
     });
   }
@@ -531,12 +629,14 @@
     loadTour2();
     fillTour3Select();
     if (document.getElementById('workSelect').value) showWork();
+    fillTour4Select();
+    if (document.getElementById('tour4Select').value) showTour4();
     loadSummary();
   }
 
   function exportCSV() {
     var teams = getTeams();
-    var rows = [['Место', 'Команда', 'Т1 квиз', 'Т1 кейс', 'Т1 итого', 'Т2', 'Т3', 'Общий итог']];
+    var rows = [['Место', 'Команда', 'Т1 квиз (из 30)', 'Т1 кейс (из 5)', 'Т1 итого (из 35)', 'Т2 (из 8)', 'Т3 (из 10)', 'Т4 (из 22)', 'Общий итог (из 75)']];
     var summary = teams.map(function(t) {
       var q = null;
       try { q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
@@ -550,10 +650,15 @@
       var ts = 0;
       var s3 = localStorage.getItem('score3_team_' + t.id);
       if (s3) ts = s3.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
-      return { name: t.name, quiz: quiz, cs: cs, t1: quiz + cs, t2: tour2, t3: ts, total: quiz + cs + tour2 + ts };
+      var t4 = null;
+      try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+      var tour4Auto = t4 ? (t4.stage1Points || 0) : 0;
+      var tour4Manual = getTour4StoryPoints(t.id);
+      var tour4 = tour4Auto + tour4Manual;
+      return { name: t.name, quiz: quiz, cs: cs, t1: quiz + cs, t2: tour2, t3: ts, t4: tour4, total: quiz + cs + tour2 + ts + tour4 };
     });
     summary.sort(function(a, b) { return b.total - a.total; });
-    summary.forEach(function(r, i) { rows.push([i + 1, r.name, r.quiz, r.cs, r.t1, r.t2, r.t3, r.total]); });
+    summary.forEach(function(r, i) { rows.push([i + 1, r.name, r.quiz, r.cs, r.t1, r.t2, r.t3, r.t4, r.total]); });
     var csv = rows.map(function(r) { return r.join(';'); }).join('\n');
     var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
     var a = document.createElement('a');
@@ -568,8 +673,8 @@
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
       if (k.indexOf('result_team_') === 0 || k.indexOf('result2_team_') === 0 || k.indexOf('result3_team_') === 0 ||
-          k.indexOf('case_team_') === 0 || k.indexOf('case_score_') === 0 || k.indexOf('score3_team_') === 0 ||
-          k === 'teams') {
+          k.indexOf('result4_team_') === 0 || k.indexOf('case_team_') === 0 || k.indexOf('case_score_') === 0 ||
+          k.indexOf('score3_team_') === 0 || k.indexOf('story4_') === 0 || k === 'teams') {
         toRemove.push(k);
       }
     }
