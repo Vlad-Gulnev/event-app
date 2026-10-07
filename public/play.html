@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тур 1. Правовой щит</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* липкая панель с кнопкой внизу, актуально для телефона */
+    .sticky-submit {
+      position: sticky;
+      bottom: 0;
+      background: rgba(245,247,250,0.95);
+      backdrop-filter: blur(6px);
+      padding: 12px 0;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .sticky-submit .progress-text {
+      font-size: 14px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">Координационный центр · ЯрГУ им. П.Г. Демидова</div>
+    <h1>Тур 1. Правовой щит</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+  <p id="who" style="color: var(--muted); font-size: 14px;"></p>
+
+  <div id="questions"></div>
+
+  <div class="sticky-submit">
+    <span class="progress-text" id="progressText">Отвечено: 0 / 30</span>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitAll()">Отправить ответы</button>
+  </div>
+
+  <p id="status"></p>
+</main>
+
+<footer class="site-footer">
+  Координационный центр · ЯрГУ им. П.Г. Демидова
+</footer>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  var teamId = params.get('team');
+  var token  = params.get('token');
+
+  if (!teamId) {
+    document.getElementById('who').textContent = 'Нет teamId. Откройте страницу через QR вашей команды.';
+  } else {
+    document.getElementById('who').textContent = 'Команда #' + teamId;
+  }
+
+  var questions = [
+    { id: 1,  text: 'Какой федеральный закон регулирует противодействие экстремистской деятельности?',
+      options: ['ФЗ №114-ФЗ', 'ФЗ №115-ФЗ', 'ФЗ №35-ФЗ', 'ФЗ №152-ФЗ'], correct: 0 },
+    { id: 2,  text: 'Какая статья УК РФ предусматривает ответственность за публичные призывы к экстремизму?',
+      options: ['205', '280', '282', '158'], correct: 1 },
+    { id: 3,  text: 'Что относится к признакам запрещённого контента?',
+      options: ['Критика власти', 'Призыв к насилию по национальному признаку', 'Мем про кота', 'Обзор игры'], correct: 1 },
+    { id: 4,  text: 'С какого возраста наступает уголовная ответственность за терроризм?',
+      options: ['14 лет', '16 лет', '18 лет', '21 год'], correct: 0 },
+    { id: 5,  text: 'Что делать, если в соцсетях нашли призыв к экстремизму?',
+      options: ['Вступить в спор', 'Поделиться с друзьями', 'Сообщить в правоохранительные органы', 'Просто закрыть'], correct: 2 },
+    { id: 6,  text: 'Куда НЕ нужно сообщать о признаках вербовки?',
+      options: ['В полицию', 'В ФСБ', 'В администрацию соцсети', 'В публичный чат для обсуждения'], correct: 3 },
+    { id: 7,  text: 'Что такое «экстремистское сообщество» по УК РФ?',
+      options: ['Любая группа людей', 'Организованная группа для подготовки экстремистских преступлений', 'Кружок по интересам', 'Партия'], correct: 1 },
+    { id: 8,  text: 'Какая статья УК РФ наказывает за организацию экстремистского сообщества?',
+      options: ['282.1', '205', '158', '213'], correct: 0 },
+    { id: 9,  text: 'Что такое «язык вражды» (hate speech)?',
+      options: ['Литературный жанр', 'Речь, разжигающая ненависть по признаку группы', 'Научный термин', 'Спор'], correct: 1 },
+    { id: 10, text: 'Что относится к профилактике экстремизма среди молодёжи?',
+      options: ['Игнорирование', 'Формирование критического мышления', 'Запугивание', 'Запрет интернета'], correct: 1 },
+    { id: 11, text: 'Какой признак манипуляции в интернете?',
+      options: ['Ссылка на источники', 'Давление на эмоции и срочность', 'Логичные аргументы', 'Нейтральный тон'], correct: 1 },
+    { id: 12, text: 'Что делать при обнаружении подозрительного предмета?',
+      options: ['Потрогать', 'Сфотографировать и отойти, сообщить', 'Открыть', 'Убрать'], correct: 1 },
+    { id: 13, text: 'Что означает термин «радикализация»?',
+      options: ['Процесс принятия крайних взглядов', 'Учёба', 'Работа', 'Хобби'], correct: 0 },
+    { id: 14, text: 'Кто чаще всего становится объектом вербовки?',
+      options: ['Пожилые люди', 'Подростки и молодёжь в кризисе', 'Бизнесмены', 'Учёные'], correct: 1 },
+    { id: 15, text: 'Что такое «цифровой след»?',
+      options: ['След на снегу', 'Информация о вас в интернете', 'Трекер', 'Хештег'], correct: 1 },
+    { id: 16, text: 'Какая статья УК РФ — за заведомо ложное сообщение о теракте?',
+      options: ['207', '205', '282', '158'], correct: 0 },
+    { id: 17, text: 'Что относится к мерам безопасности в интернете?',
+      options: ['Публиковать адрес', 'Слабый пароль', 'Двухфакторная аутентификация', 'Открытый Wi-Fi без VPN'], correct: 2 },
+    { id: 18, text: 'Что такое «социальная инженерия»?',
+      options: ['Наука', 'Манипуляция людьми для получения данных', 'Строительство', 'Дизайн'], correct: 1 },
+    { id: 19, text: 'Какой признак вербовки в переписке?',
+      options: ['Предложение денег за «несложную работу»', 'Учёба', 'Знакомство', 'Обсуждение фильма'], correct: 0 },
+    { id: 20, text: 'Что делать, если вам угрожают в интернете?',
+      options: ['Удалить аккаунт', 'Ответить агрессией', 'Сохранить доказательства и обратиться в полицию', 'Игнорировать'], correct: 2 },
+    { id: 21, text: 'Что такое «информационная война»?',
+      options: ['Игра', 'Целенаправленное влияние на сознание через информацию', 'Журналистика', 'Реклама'], correct: 1 },
+    { id: 22, text: 'Что относится к профилактике терроризма?',
+      options: ['Просвещение и информирование', 'Запугивание', 'Игнор', 'Пропаганда'], correct: 0 },
+    { id: 23, text: 'Кто может сообщить о признаках экстремизма?',
+      options: ['Только полиция', 'Только учителя', 'Любой гражданин', 'Только юристы'], correct: 2 },
+    { id: 24, text: 'Что важно при работе с молодёжью в теме профилактики?',
+      options: ['Назидание', 'Диалог и доверие', 'Запреты', 'Наказание'], correct: 1 },
+    { id: 25, text: 'Что такое «критическое мышление»?',
+      options: ['Способ проверять информацию', 'Критика всех', 'Скепсис без аргументов', 'Отказ думать'], correct: 0 },
+    { id: 26, text: 'Что относится к признакам фейковой новости?',
+      options: ['Проверенные источники', 'Ссылки на первоисточник', 'Кричащий заголовок без фактов', 'Дата публикации'], correct: 2 },
+    { id: 27, text: 'Какую информацию лучше не публиковать?',
+      options: ['Свои стихи', 'Номера документов, адрес, телефон', 'Мемы', 'Фото природы'], correct: 1 },
+    { id: 28, text: 'Что делать при получении сомнительного «задания» в мессенджере?',
+      options: ['Выполнить', 'Обсудить с родителями/педагогом и не выполнять', 'Переслать друзьям', 'Оплатить'], correct: 1 },
+    { id: 29, text: 'Что такое «деструктивная секта»?',
+      options: ['Спортивный клуб', 'Группа, разрушающая личность и связи человека', 'Кружок по рисованию', 'Библиотека'], correct: 1 },
+    { id: 30, text: 'Какая главная цель профилактической работы?',
+      options: ['Наказать', 'Предупредить и защитить', 'Запугать', 'Изолировать'], correct: 1 }
+  ];
+
+  function render() {
+    var box = document.getElementById('questions');
+    box.innerHTML = '';
+    questions.forEach(function(q, i) {
+      var div = document.createElement('div');
+      div.className = 'question';
+      div.innerHTML = '<b>' + (i + 1) + '. ' + q.text + '</b>';
+      q.options.forEach(function(opt, j) {
+        var label = document.createElement('label');
+        label.className = 'opt';
+        label.innerHTML = '<input type="radio" name="q' + q.id + '" value="' + j + '" onchange="updateProgress()"> ' + opt;
+        div.appendChild(label);
+      });
+      box.appendChild(div);
+    });
+  }
+
+  function updateProgress() {
+    var answered = 0;
+    questions.forEach(function(q) {
+      if (document.querySelector('input[name="q' + q.id + '"]:checked')) answered++;
+    });
+    var total = questions.length;
+    var percent = (answered / total) * 100;
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressText').textContent = 'Отвечено: ' + answered + ' / ' + total;
+  }
+
+  function submitAll() {
+    var correct = 0;
+    var unanswered = 0;
+    questions.forEach(function(q) {
+      var picked = document.querySelector('input[name="q' + q.id + '"]:checked');
+      if (!picked) { unanswered++; }
+    });
+    if (unanswered > 0) {
+      if (!confirm('Вы ответили не на все вопросы. Всё равно отправить?')) return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Отправка...';
+
+    var chain = Promise.resolve();
+    questions.forEach(function(q) {
+      chain = chain.then(function() {
+        var picked = document.querySelector('input[name="q' + q.id + '"]:checked');
+        var val = picked ? Number(picked.value) : -1;
+        if (val === q.correct) correct++;
+        return fetch('/api/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teamId: teamId, token: token, tour: 1, questionId: q.id, answer: val })
+        });
+      });
+    });
+
+    chain.then(function() {
+      document.getElementById('status').innerHTML =
+        '<div class="msg ok">Ответы отправлены. Правильных: <b>' + correct + ' из ' + questions.length + '</b>.</div>';
+      btn.textContent = 'Ответы отправлены';
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+  }
+
+  render();
+  updateProgress();
+</script>
+
+</body>
+</html>
