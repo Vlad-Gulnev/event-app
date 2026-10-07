@@ -25,12 +25,13 @@
     input[type="text"], input[type="file"] { width: 100%; padding: 11px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius); box-sizing: border-box; }
     .timer-display {
       background: var(--primary-dark); color: #fff;
-      padding: 12px 20px; border-radius: var(--radius);
-      font-size: 22px; font-weight: 800; text-align: center;
-      margin: 16px 0;
+      padding: 18px 20px; border-radius: var(--radius);
+      font-size: 32px; font-weight: 800; text-align: center;
+      margin: 16px 0; letter-spacing: 2px;
     }
+    .timer-display.expired { background: var(--err); }
+    .timer-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: -8px; margin-bottom: 16px; }
     .ticket { background: #fff; border: 2px solid var(--primary); border-radius: var(--radius); padding: 20px; margin: 20px 0; }
-    .ticket .big { font-size: 28px; font-weight: 800; color: var(--primary-dark); }
     .upload-zone {
       border: 2px dashed var(--border); border-radius: var(--radius);
       padding: 24px; text-align: center; cursor: pointer;
@@ -39,10 +40,7 @@
     }
     .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary); background: var(--primary-soft); }
     .upload-zone p { margin: 0; color: var(--muted); font-size: 14px; }
-    .preview {
-      max-width: 100%; max-height: 300px; margin-top: 12px;
-      border-radius: var(--radius); box-shadow: var(--shadow);
-    }
+    .preview { max-width: 100%; max-height: 300px; margin-top: 12px; border-radius: var(--radius); box-shadow: var(--shadow); }
     .server-badge {
       display: inline-block; padding: 4px 10px; font-size: 12px;
       border-radius: 999px; background: #eef1f5; color: var(--muted);
@@ -83,18 +81,13 @@
       <li>Оригинальным и виральным.</li>
     </ul>
     <div class="timer-display" id="timer">40:00</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-secondary" onclick="startTimer()">▶ Запустить</button>
-      <button class="btn btn-secondary" onclick="pauseTimer()">⏸ Пауза</button>
-      <button class="btn btn-secondary" onclick="resetTimer()">↺ Сброс</button>
-    </div>
+    <p class="timer-note" id="timerNote">Таймер запущен автоматически. Паузы нет.</p>
   </div>
 
   <h3 class="step-title">Шаг 4. Загрузка работы</h3>
   <div class="card">
     <div id="serverBadge" class="server-badge">Определение режима загрузки...</div>
 
-    <!-- Режим сервера: файл -->
     <div id="fileMode" style="display:none;">
       <p><b>Прикрепите файл</b> (картинка, PDF или короткое видео, до 10 МБ)</p>
       <div class="upload-zone" id="uploadZone">
@@ -104,7 +97,6 @@
       <div id="filePreview"></div>
     </div>
 
-    <!-- Режим без сервера: ссылка -->
     <div id="linkMode" style="display:none;">
       <label for="link"><b>Ссылка на работу</b></label>
       <input type="text" id="link" placeholder="https://t.me/... или https://vk.com/... или облако">
@@ -197,7 +189,6 @@
     });
   }
 
-  // Проверка сервера
   function detectServer() {
     var badge = document.getElementById('serverBadge');
     fetch('/api/health', { method: 'GET' })
@@ -256,24 +247,35 @@
     }
   }
 
-  // Таймер
-  var timeLeft = 40 * 60;
-  var timerInterval = null;
+  // ============= АВТОТАЙМЕР =============
+  var TOTAL_SECONDS = 40 * 60;
+  var timeLeft = TOTAL_SECONDS;
+  var timerStarted = false;
+
   function updateTimerDisplay() {
     var m = Math.floor(timeLeft / 60);
     var s = timeLeft % 60;
-    document.getElementById('timer').textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    var el = document.getElementById('timer');
+    el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    if (timeLeft === 0) {
+      el.classList.add('expired');
+      document.getElementById('timerNote').textContent = 'Время вышло. Загрузите работу.';
+    }
   }
+
   function startTimer() {
-    if (timerInterval) return;
-    timerInterval = setInterval(function() {
-      if (timeLeft > 0) { timeLeft--; updateTimerDisplay(); }
-      else { clearInterval(timerInterval); timerInterval = null; alert('Время вышло! Загрузите работу.'); }
+    if (timerStarted) return;
+    timerStarted = true;
+    updateTimerDisplay();
+    setInterval(function() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        updateTimerDisplay();
+      }
     }, 1000);
   }
-  function pauseTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
-  function resetTimer() { pauseTimer(); timeLeft = 40 * 60; updateTimerDisplay(); }
 
+  // ============= ОТПРАВКА =============
   function submitWork() {
     if (!selectedFormat) { alert('Выберите формат'); return; }
     if (!selectedTopic) { alert('Выберите тему'); return; }
@@ -320,7 +322,7 @@
           document.getElementById('submitBtn').textContent = 'Отправить работу';
         });
     } else if (serverOnline && !selectedFile) {
-      alert('Прикрепите файл или переключитесь на ссылку.');
+      alert('Прикрепите файл.');
     } else {
       var link = document.getElementById('link').value.trim();
       if (!link) { alert('Вставьте ссылку на работу'); return; }
@@ -333,7 +335,8 @@
   function showSuccess(data) {
     var preview = '';
     if (data.fileUrl) {
-      if (data.fileUrl.match(/\.(jpg|jpeg|png|webp|gif)$/i)) {
+      var ext = (data.fileUrl.split('.').pop() || '').toLowerCase();
+      if (['jpg','jpeg','png','webp','gif'].indexOf(ext) !== -1) {
         preview = '<img class="preview" src="' + data.fileUrl + '" alt="">';
       } else {
         preview = '<p>📎 <a href="' + data.fileUrl + '" target="_blank">' + (data.fileName || 'файл') + '</a></p>';
@@ -357,8 +360,8 @@
   }
 
   renderOptions();
-  updateTimerDisplay();
   detectServer();
+  startTimer();
 </script>
 
 </body>
