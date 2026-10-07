@@ -6,6 +6,12 @@
   <title>Меню туров — Кейс-чемпионат</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    .team-header {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      box-shadow: var(--shadow); margin-bottom: 20px;
+    }
+    .team-header h2 { margin: 0 0 6px; }
     .tour-card {
       display: flex; align-items: flex-start; gap: 16px;
       padding: 18px 20px; background: #fff;
@@ -33,12 +39,6 @@
       background: #eef1f5; color: var(--muted);
     }
     .tour-card.locked { opacity: 0.55; }
-    .team-header {
-      background: #fff; border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px 20px;
-      box-shadow: var(--shadow); margin-bottom: 20px;
-    }
-    .team-header h2 { margin: 0 0 6px; }
   </style>
 </head>
 <body>
@@ -71,22 +71,6 @@
   }
 
   var teamName = 'Команда #' + teamId;
-
-  var tours = [
-    { num: 1, key: '1', title: 'Правовой щит',
-      desc: 'Квиз из 30 вопросов + ситуационный кейс',
-      href: 'play.html', ready: true },
-    { num: 2, key: '2', title: 'Психологический иммунитет',
-      desc: 'Разбор манипуляций + ситуационные задачи',
-      href: 'play2.html', ready: false },
-    { num: 3, key: '3', title: 'Контент-баттл',
-      desc: 'Командный хакатон по созданию профилактического контента',
-      href: 'play3.html', ready: false },
-    { num: 4, key: '4', title: 'Алгоритм действий и поведение в ЧС',
-      desc: 'Ролевая игра и разбор ошибок',
-      href: 'play4.html', ready: false }
-  ];
-
   var teamCaseId = 1;
   if (teamId) {
     var teams = getTeams();
@@ -98,6 +82,21 @@
       }
     }
   }
+
+  var tours = [
+    { num: 1, title: 'Правовой щит',
+      desc: 'Квиз из 30 вопросов + ситуационный кейс',
+      href: 'play.html', ready: true, resultKey: 'result_team_' },
+    { num: 2, title: 'Психологический иммунитет',
+      desc: 'Разбор манипуляций + ситуационные задачи',
+      href: 'play2.html', ready: true, resultKey: 'result2_team_' },
+    { num: 3, title: 'Контент-баттл',
+      desc: 'Командный хакатон по созданию профилактического контента',
+      href: 'play3.html', ready: false, resultKey: 'result3_team_' },
+    { num: 4, title: 'Алгоритм действий и поведение в ЧС',
+      desc: 'Ролевая игра и разбор ошибок',
+      href: 'play4.html', ready: false, resultKey: 'result4_team_' }
+  ];
 
   var CASES = {
     1: { title: 'Переписка в мессенджере' },
@@ -116,29 +115,23 @@
   box.innerHTML = '';
 
   tours.forEach(function(t) {
-    // проверяем, пройден ли тур
     var done = false;
-    if (t.num === 1) {
-      try {
-        var r = JSON.parse(localStorage.getItem('result_team_' + teamId) || 'null');
-        if (r && r.correct !== undefined) done = true;
-      } catch (e) {}
-    }
-    if (t.num === 2) {
-      try {
-        var r2 = JSON.parse(localStorage.getItem('result2_team_' + teamId) || 'null');
-        if (r2) done = true;
-      } catch (e) {}
-    }
+    try {
+      var r = JSON.parse(localStorage.getItem(t.resultKey + teamId) || 'null');
+      if (r && r.correct !== undefined) done = true;
+    } catch (e) {}
 
     var statusHtml = done
       ? '<span class="status-done">✓ пройден</span>'
       : '<span class="status-todo">не начат</span>';
 
-    var btnHtml = t.ready
-      ? '<a class="btn btn-primary" href="' + t.href + '?team=' + teamId + '&token=' + token + '">' +
-          (done ? 'Открыть заново' : 'Начать') + ' →</a>'
-      : '<button class="btn btn-secondary" disabled style="opacity:0.6; cursor:not-allowed;">Скоро</button>';
+    var btnHtml;
+    if (t.ready) {
+      btnHtml = '<a class="btn btn-primary" href="' + t.href + '?team=' + teamId + '&token=' + token + '">' +
+                (done ? 'Открыть заново' : 'Начать') + ' →</a>';
+    } else {
+      btnHtml = '<button class="btn btn-secondary" disabled style="opacity:0.6; cursor:not-allowed;">Скоро</button>';
+    }
 
     var card = document.createElement('div');
     card.className = 'tour-card' + (t.ready ? '' : ' locked');
@@ -152,7 +145,6 @@
     box.appendChild(card);
   });
 
-  // кнопка "обновить"
   var refreshRow = document.createElement('div');
   refreshRow.style.marginTop = '20px';
   refreshRow.innerHTML = '<button class="btn btn-secondary" onclick="location.reload()">Обновить статусы</button>';
