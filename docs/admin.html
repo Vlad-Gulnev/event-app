@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Админка чемпионата (демо)</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .copy-btn {
+      padding: 4px 10px;
+      font-size: 13px;
+      background: #eef1f5;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: #e2e7ee; }
+    .team-row td { vertical-align: middle; }
+    .team-row a { font-size: 13px; word-break: break-all; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+  </style>
 </head>
 <body>
 
@@ -21,10 +36,34 @@
     <p style="color: var(--muted); font-size: 14px;">
       Демо-режим: данные хранятся локально в этом браузере. Для реального мероприятия — сервер на VPS.
     </p>
-    <button class="btn btn-secondary" onclick="load()">Обновить</button>
-    <button class="btn btn-secondary" onclick="exportCSV()">Экспорт CSV</button>
-    <button class="btn btn-danger" onclick="clearAll()">Очистить демо-данные</button>
+    <div class="toolbar">
+      <button class="btn btn-secondary" onclick="load()">Обновить</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">Экспорт CSV</button>
+      <button class="btn btn-danger" onclick="clearAll()">Очистить демо-данные</button>
+    </div>
+  </div>
 
+  <div class="card">
+    <h2>Команды и ссылки для входа</h2>
+    <p style="color: var(--muted); font-size: 14px;">
+      Если у команды «вылетела» ссылка или потерялся QR — найдите её здесь и отправьте заново.
+    </p>
+    <table class="table" id="teamsTbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Команда</th>
+          <th>Токен</th>
+          <th>Ссылка для входа</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Результаты команд</h2>
     <table class="table" id="tbl">
       <thead>
         <tr><th>#</th><th>Команда</th><th>Баллы</th><th>Время</th></tr>
@@ -34,7 +73,7 @@
   </div>
 
   <div class="card">
-    <h3>Ручной ввод балла</h3>
+    <h2>Ручной ввод балла</h2>
     <p style="color:var(--muted); font-size:14px;">Если команда ответила на другом телефоне, жюри может ввести результат вручную.</p>
     <label for="mName">Команда</label>
     <input id="mName" type="text" placeholder="Название команды" />
@@ -50,16 +89,78 @@
 <script>
   var currentRows = [];
 
+  function getTeams() {
+    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
+    catch (e) { return []; }
+  }
+
+  function baseUrl() {
+    // Автоматически строит базовый адрес: на localhost или на github.io
+    var loc = window.location;
+    var path = loc.pathname.replace(/\/[^\/]*$/, '/'); // убираем имя файла
+    return loc.origin + path;
+  }
+
+  function loadTeams() {
+    var teams = getTeams();
+    var tbody = document.querySelector('#teamsTbl tbody');
+    tbody.innerHTML = '';
+
+    if (teams.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">Пока нет зарегистрированных команд. Откройте join.html и создайте команду.</td></tr>';
+      return;
+    }
+
+    var base = baseUrl();
+    teams.forEach(function(t) {
+      var link = base + 'join.html?token=' + t.token + '&team=' + t.id;
+      var tr = document.createElement('tr');
+      tr.className = 'team-row';
+      tr.innerHTML =
+        '<td>' + t.id + '</td>' +
+        '<td><b>' + t.name + '</b></td>' +
+        '<td><code>' + t.token + '</code></td>' +
+        '<td><a href="' + link + '" target="_blank">' + link + '</a></td>' +
+        '<td>' +
+          '<button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button> ' +
+          '<a class="copy-btn" href="' + link + '" target="_blank" style="text-decoration:none;">Открыть</a>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function copyLink(text) {
+    // современный способ — clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        alert('Ссылка скопирована:\n' + text);
+      }, function() {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    // старый способ — textarea + execCommand
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); alert('Ссылка скопирована'); }
+    catch (e) { prompt('Скопируйте ссылку вручную:', text); }
+    document.body.removeChild(ta);
+  }
+
   function collect() {
-    // собираем результаты всех команд из localStorage
     var rows = [];
     for (var i = 0; i < localStorage.length; i++) {
       var key = localStorage.key(i);
       if (key.indexOf('result_team_') === 0) {
-        try {
-          var r = JSON.parse(localStorage.getItem(key));
-          rows.push(r);
-        } catch (e) {}
+        try { rows.push(JSON.parse(localStorage.getItem(key))); } catch (e) {}
       }
       if (key.indexOf('manual_') === 0) {
         try {
@@ -72,6 +173,8 @@
   }
 
   function load() {
+    loadTeams();
+
     var rows = collect().sort(function(a, b) {
       return (b.correct || 0) - (a.correct || 0);
     });
@@ -119,7 +222,7 @@
   }
 
   function clearAll() {
-    if (!confirm('Удалить все демо-данные?')) return;
+    if (!confirm('Удалить все демо-данные (команды и результаты)?')) return;
     var toRemove = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
