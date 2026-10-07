@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход команды</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">Координационный центр · ЯрГУ им. П.Г. Демидова</div>
+    <h1>Кейс-чемпионат для студентов</h1>
+  </div>
+</header>
+
+<main class="container">
+  <div class="card" id="card">Загрузка...</div>
+</main>
+
+<footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  var token  = params.get('token');
+  var teamId = params.get('team');
+  var card   = document.getElementById('card');
+
+  function getTeams() {
+    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveTeams(t) { localStorage.setItem('teams', JSON.stringify(t)); }
+
+  if (token && teamId) {
+    var teams = getTeams();
+    var team = null;
+    for (var i = 0; i < teams.length; i++) {
+      if (String(teams[i].id) === String(teamId) && teams[i].token === token) {
+        team = teams[i];
+        break;
+      }
+    }
+    if (!team) {
+      card.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
+    } else {
+      card.innerHTML =
+        '<h2>Привет, ' + team.name + '!</h2>' +
+        '<p>Команда #' + team.id + '. Когда будете готовы — начинайте Тур 1.</p>' +
+        '<p style="margin-top:20px;"><a class="btn btn-primary" href="play.html?team=' + team.id + '&token=' + team.token + '">Начать Тур 1. Правовой щит →</a></p>';
+    }
+  } else {
+    card.innerHTML =
+      '<h2>Регистрация команды</h2>' +
+      '<p>Введите название команды.</p>' +
+      '<label for="name">Название команды</label>' +
+      '<input id="name" type="text" placeholder="Например: Правоведы" />' +
+      '<button class="btn btn-primary" onclick="register()">Зарегистрировать</button>' +
+      '<div id="result"></div>';
+  }
+
+  function register() {
+    var name = document.getElementById('name').value.trim() || 'Без названия';
+    var teams = getTeams();
+    var team = {
+      id: teams.length + 1,
+      name: name,
+      token: Math.random().toString(36).slice(2, 10)
+    };
+    teams.push(team);
+    saveTeams(teams);
+
+    document.getElementById('result').innerHTML =
+      '<div class="msg ok">Команда зарегистрирована</div>' +
+      '<p><b>' + team.name + '</b></p>' +
+      '<p class="badge">Токен: ' + team.token + '</p>' +
+      '<p style="margin-top:16px;">' +
+        '<a class="btn btn-secondary" href="join.html?token=' + team.token + '&team=' + team.id + '">Открыть страницу команды →</a>' +
+      '</p>';
+  }
+</script>
+
+</body>
+</html>
