@@ -7,18 +7,24 @@
   <link rel="stylesheet" href="style.css">
   <style>
     .copy-btn {
-      padding: 4px 10px;
-      font-size: 13px;
-      background: #eef1f5;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
+      padding: 4px 10px; font-size: 13px;
+      background: #eef1f5; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; font-family: inherit;
     }
     .copy-btn:hover { background: #e2e7ee; }
-    .team-row td { vertical-align: middle; }
-    .team-row a { font-size: 13px; word-break: break-all; }
-    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .case-answer {
+      background: #f7f9fc; border-left: 4px solid var(--primary);
+      padding: 12px 16px; border-radius: 6px; margin: 8px 0;
+      white-space: pre-wrap; font-size: 15px;
+    }
+    .case-block {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin: 12px 0; background: #fff;
+    }
+    .case-block h4 { margin: 0 0 8px; color: var(--primary-dark); }
+    .score-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+    .score-row input { width: 60px; margin: 0; padding: 6px; }
+    .criteria-list { font-size: 13px; color: var(--muted); margin: 6px 0 12px; }
   </style>
 </head>
 <body>
@@ -34,9 +40,9 @@
 
   <div class="card">
     <p style="color: var(--muted); font-size: 14px;">
-      Демо-режим: данные хранятся локально в этом браузере. Для реального мероприятия — сервер на VPS.
+      Демо-режим: данные хранятся локально в этом браузере.
     </p>
-    <div class="toolbar">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="load()">Обновить</button>
       <button class="btn btn-secondary" onclick="exportCSV()">Экспорт CSV</button>
       <button class="btn btn-danger" onclick="clearAll()">Очистить демо-данные</button>
@@ -45,41 +51,27 @@
 
   <div class="card">
     <h2>Команды и ссылки для входа</h2>
-    <p style="color: var(--muted); font-size: 14px;">
-      Если у команды «вылетела» ссылка или потерялся QR — найдите её здесь и отправьте заново.
-    </p>
+    <p style="color: var(--muted); font-size: 14px;">Если у команды «вылетела» ссылка — отправьте её заново.</p>
     <table class="table" id="teamsTbl">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Команда</th>
-          <th>Токен</th>
-          <th>Ссылка для входа</th>
-          <th></th>
-        </tr>
-      </thead>
+      <thead><tr><th>#</th><th>Команда</th><th>Токен</th><th>Ссылка</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
 
   <div class="card">
-    <h2>Результаты команд</h2>
+    <h2>Оценка ситуационных кейсов (Тур 1, этап 2)</h2>
+    <p style="color: var(--muted); font-size: 14px;">
+      Критерии за кейс: 2 + 2 + 1 = 5 баллов максимум.
+    </p>
+    <div id="casesBox">Загрузка...</div>
+  </div>
+
+  <div class="card">
+    <h2>Результаты — сводная таблица</h2>
     <table class="table" id="tbl">
-      <thead>
-        <tr><th>#</th><th>Команда</th><th>Баллы</th><th>Время</th></tr>
-      </thead>
+      <thead><tr><th>#</th><th>Команда</th><th>Квиз</th><th>Кейс</th><th>Итого</th></tr></thead>
       <tbody></tbody>
     </table>
-  </div>
-
-  <div class="card">
-    <h2>Ручной ввод балла</h2>
-    <p style="color:var(--muted); font-size:14px;">Если команда ответила на другом телефоне, жюри может ввести результат вручную.</p>
-    <label for="mName">Команда</label>
-    <input id="mName" type="text" placeholder="Название команды" />
-    <label for="mScore">Балл (из 30)</label>
-    <input id="mScore" type="text" placeholder="Например: 21" />
-    <button class="btn btn-primary" onclick="addManual()">Добавить</button>
   </div>
 
 </main>
@@ -87,17 +79,14 @@
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
-  var currentRows = [];
-
   function getTeams() {
     try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
     catch (e) { return []; }
   }
 
   function baseUrl() {
-    // Автоматически строит базовый адрес: на localhost или на github.io
     var loc = window.location;
-    var path = loc.pathname.replace(/\/[^\/]*$/, '/'); // убираем имя файла
+    var path = loc.pathname.replace(/\/[^\/]*$/, '/');
     return loc.origin + path;
   }
 
@@ -105,128 +94,180 @@
     var teams = getTeams();
     var tbody = document.querySelector('#teamsTbl tbody');
     tbody.innerHTML = '';
-
     if (teams.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5">Пока нет зарегистрированных команд. Откройте join.html и создайте команду.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5">Пока нет команд.</td></tr>';
       return;
     }
-
     var base = baseUrl();
     teams.forEach(function(t) {
       var link = base + 'join.html?token=' + t.token + '&team=' + t.id;
       var tr = document.createElement('tr');
-      tr.className = 'team-row';
       tr.innerHTML =
         '<td>' + t.id + '</td>' +
         '<td><b>' + t.name + '</b></td>' +
         '<td><code>' + t.token + '</code></td>' +
         '<td><a href="' + link + '" target="_blank">' + link + '</a></td>' +
-        '<td>' +
-          '<button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button> ' +
-          '<a class="copy-btn" href="' + link + '" target="_blank" style="text-decoration:none;">Открыть</a>' +
-        '</td>';
+        '<td><button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button></td>';
       tbody.appendChild(tr);
     });
   }
 
   function copyLink(text) {
-    // современный способ — clipboard API
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function() {
-        alert('Ссылка скопирована:\n' + text);
-      }, function() {
-        fallbackCopy(text);
-      });
-    } else {
-      fallbackCopy(text);
-    }
+      navigator.clipboard.writeText(text).then(function() { alert('Скопировано'); }, function() { fallbackCopy(text); });
+    } else { fallbackCopy(text); }
   }
-
   function fallbackCopy(text) {
-    // старый способ — textarea + execCommand
     var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); alert('Ссылка скопирована'); }
-    catch (e) { prompt('Скопируйте ссылку вручную:', text); }
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('Скопировано'); } catch (e) { prompt('Скопируйте:', text); }
     document.body.removeChild(ta);
   }
 
-  function collect() {
-    var rows = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var key = localStorage.key(i);
-      if (key.indexOf('result_team_') === 0) {
-        try { rows.push(JSON.parse(localStorage.getItem(key))); } catch (e) {}
-      }
-      if (key.indexOf('manual_') === 0) {
-        try {
-          var m = JSON.parse(localStorage.getItem(key));
-          rows.push({ teamName: m.teamName, correct: m.correct, total: 30, time: m.time });
-        } catch (e) {}
-      }
+  function loadCases() {
+    var teams = getTeams();
+    var box = document.getElementById('casesBox');
+    box.innerHTML = '';
+    if (teams.length === 0) {
+      box.innerHTML = '<p>Нет команд.</p>';
+      return;
     }
-    return rows;
+    teams.forEach(function(t) {
+      var caseData = null;
+      try { caseData = JSON.parse(localStorage.getItem('case_team_' + t.id) || 'null'); } catch (e) {}
+
+      var scoreKey = 'case_score_' + t.id;
+      var savedScore = localStorage.getItem(scoreKey);
+      var parts = savedScore ? savedScore.split(',').map(Number) : [0, 0, 0];
+
+      var html = '<div class="case-block">' +
+        '<h4>Команда: ' + t.name + '</h4>' +
+        '<p><b>Кейс:</b> ' + (caseData ? caseData.caseTitle : '— не назначен —') + '</p>';
+
+      if (caseData) {
+        var safeAnswer = (caseData.answer || '(пусто)').replace(/</g, '&lt;');
+        html += '<p><b>Ответ команды:</b></p>' +
+          '<div class="case-answer">' + safeAnswer + '</div>' +
+          '<p style="color:var(--muted); font-size:13px;">Отправлено: ' +
+            new Date(caseData.time).toLocaleString('ru-RU') + '</p>';
+      } else {
+        html += '<p style="color:var(--muted);">Команда ещё не отправила ответ.</p>';
+      }
+
+      html += '<p class="criteria-list"><b>Критерии оценки:</b><br>' +
+        '1) Замечена опасность — 0–2 балла<br>' +
+        '2) Названы признаки — 0–2 балла<br>' +
+        '3) Правильные действия — 0–1 балл</p>';
+
+      html += '<div class="score-row">' +
+        '<label>Крит.1: <input type="number" min="0" max="2" id="c1_' + t.id + '" value="' + (parts[0] || 0) + '"></label>' +
+        '<label>Крит.2: <input type="number" min="0" max="2" id="c2_' + t.id + '" value="' + (parts[1] || 0) + '"></label>' +
+        '<label>Крит.3: <input type="number" min="0" max="1" id="c3_' + t.id + '" value="' + (parts[2] || 0) + '"></label>' +
+        '<button class="btn btn-primary" onclick="saveScore(' + t.id + ')">Сохранить</button>' +
+        '<span id="saved_' + t.id + '" style="color:var(--ok); font-weight:600;"></span>' +
+        '</div>';
+
+      html += '</div>';
+      box.insertAdjacentHTML('beforeend', html);
+    });
   }
 
-  function load() {
-    loadTeams();
+  function saveScore(teamId) {
+    var c1 = Math.max(0, Math.min(2, Number(document.getElementById('c1_' + teamId).value) || 0));
+    var c2 = Math.max(0, Math.min(2, Number(document.getElementById('c2_' + teamId).value) || 0));
+    var c3 = Math.max(0, Math.min(1, Number(document.getElementById('c3_' + teamId).value) || 0));
+    localStorage.setItem('case_score_' + teamId, c1 + ',' + c2 + ',' + c3);
+    var sum = c1 + c2 + c3;
+    var lbl = document.getElementById('saved_' + teamId);
+    lbl.textContent = 'Сохранено: ' + sum + ' / 5';
+    setTimeout(function() { lbl.textContent = ''; }, 3000);
+    loadSummary();
+  }
 
-    var rows = collect().sort(function(a, b) {
-      return (b.correct || 0) - (a.correct || 0);
+  function loadSummary() {
+    var teams = getTeams();
+    var rows = [];
+    teams.forEach(function(t) {
+      var quizResult = null;
+      try { quizResult = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
+      var quizScore = quizResult ? quizResult.correct : 0;
+
+      var caseScore = 0;
+      var savedScore = localStorage.getItem('case_score_' + t.id);
+      if (savedScore) {
+        caseScore = savedScore.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
+      }
+
+      rows.push({
+        teamId: t.id,
+        teamName: t.name,
+        quiz: quizScore,
+        quizMax: 30,
+        caseScore: caseScore,
+        caseMax: 5,
+        total: quizScore + caseScore
+      });
     });
-    currentRows = rows;
+
+    rows.sort(function(a, b) { return b.total - a.total; });
 
     var tbody = document.querySelector('#tbl tbody');
     tbody.innerHTML = '';
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">Нет команд.</td></tr>';
+      return;
+    }
     rows.forEach(function(r, i) {
       var tr = document.createElement('tr');
       if (i === 0 && rows.length > 1) tr.className = 'leader';
       tr.innerHTML =
         '<td>' + (i + 1) + '</td>' +
         '<td>' + r.teamName + '</td>' +
-        '<td><span class="badge ok">' + r.correct + ' / ' + (r.total || 30) + '</span></td>' +
-        '<td style="font-size:13px; color:#666;">' + (r.time ? new Date(r.time).toLocaleString('ru-RU') : '') + '</td>';
+        '<td>' + r.quiz + ' / ' + r.quizMax + '</td>' +
+        '<td>' + r.caseScore + ' / ' + r.caseMax + '</td>' +
+        '<td><b>' + r.total + '</b> / ' + (r.quizMax + r.caseMax) + '</td>';
       tbody.appendChild(tr);
     });
-    if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4">Пока нет результатов. Пройдите тест от имени команды.</td></tr>';
-    }
+  }
+
+  function load() {
+    loadTeams();
+    loadCases();
+    loadSummary();
   }
 
   function exportCSV() {
-    var rows = [['Место', 'Команда', 'Баллы', 'Время']];
-    currentRows.forEach(function(r, i) {
-      rows.push([i + 1, r.teamName, r.correct + '/' + (r.total || 30), r.time || '']);
+    var teams = getTeams();
+    var rows = [['Место', 'Команда', 'Квиз (из 30)', 'Кейс (из 5)', 'Итого (из 35)']];
+    var summary = [];
+    teams.forEach(function(t) {
+      var quiz = 0;
+      try { var q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); if (q) quiz = q.correct; } catch (e) {}
+      var cs = 0;
+      var s = localStorage.getItem('case_score_' + t.id);
+      if (s) cs = s.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
+      summary.push({ name: t.name, quiz: quiz, cs: cs, total: quiz + cs });
+    });
+    summary.sort(function(a, b) { return b.total - a.total; });
+    summary.forEach(function(r, i) {
+      rows.push([i + 1, r.name, r.quiz, r.cs, r.total]);
     });
     var csv = rows.map(function(r) { return r.join(';'); }).join('\n');
     var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'demo-results.csv';
+    a.download = 'tour1-results.csv';
     a.click();
   }
 
-  function addManual() {
-    var name = document.getElementById('mName').value.trim();
-    var score = parseInt(document.getElementById('mScore').value, 10);
-    if (!name || isNaN(score)) { alert('Введите название команды и число'); return; }
-    var rec = { teamName: name, correct: score, total: 30, time: new Date().toISOString() };
-    localStorage.setItem('manual_' + Date.now(), JSON.stringify(rec));
-    document.getElementById('mName').value = '';
-    document.getElementById('mScore').value = '';
-    load();
-  }
-
   function clearAll() {
-    if (!confirm('Удалить все демо-данные (команды и результаты)?')) return;
+    if (!confirm('Удалить все демо-данные (команды, ответы, кейсы)?')) return;
     var toRemove = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k.indexOf('result_team_') === 0 || k.indexOf('manual_') === 0 || k === 'teams') {
+      if (k.indexOf('result_team_') === 0 || k.indexOf('case_team_') === 0 ||
+          k.indexOf('case_score_') === 0 || k === 'teams') {
         toRemove.push(k);
       }
     }
@@ -235,7 +276,11 @@
   }
 
   load();
-  setInterval(load, 3000);
+  setInterval(function() {
+    loadTeams();
+    loadCases();
+    loadSummary();
+  }, 5000);
 </script>
 
 </body>

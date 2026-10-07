@@ -22,6 +22,14 @@
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
+  // 4 кейса. Каждой команде случайно выдаётся один.
+  var CASES = [
+    { id: 1, title: 'Переписка в мессенджере' },
+    { id: 2, title: 'Пост в соцсети' },
+    { id: 3, title: 'Подозрительный предмет в вузе' },
+    { id: 4, title: 'Лёгкий заработок' }
+  ];
+
   var params = new URLSearchParams(location.search);
   var token  = params.get('token');
   var teamId = params.get('team');
@@ -38,16 +46,19 @@
     var team = null;
     for (var i = 0; i < teams.length; i++) {
       if (String(teams[i].id) === String(teamId) && teams[i].token === token) {
-        team = teams[i];
-        break;
+        team = teams[i]; break;
       }
     }
     if (!team) {
       card.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
     } else {
+      var caseTitle = '—';
+      for (var j = 0; j < CASES.length; j++) {
+        if (CASES[j].id === team.caseId) caseTitle = CASES[j].title;
+      }
       card.innerHTML =
         '<h2>Привет, ' + team.name + '!</h2>' +
-        '<p>Команда #' + team.id + '. Когда будете готовы — начинайте Тур 1.</p>' +
+        '<p>Команда #' + team.id + '. Ваш ситуационный кейс: <b>' + caseTitle + '</b>.</p>' +
         '<p style="margin-top:20px;"><a class="btn btn-primary" href="play.html?team=' + team.id + '&token=' + team.token + '">Начать Тур 1. Правовой щит →</a></p>';
     }
   } else {
@@ -63,18 +74,26 @@
   function register() {
     var name = document.getElementById('name').value.trim() || 'Без названия';
     var teams = getTeams();
+    var caseId = CASES[Math.floor(Math.random() * CASES.length)].id;
     var team = {
       id: teams.length + 1,
       name: name,
-      token: Math.random().toString(36).slice(2, 10)
+      token: Math.random().toString(36).slice(2, 10),
+      caseId: caseId
     };
     teams.push(team);
     saveTeams(teams);
+
+    var caseTitle = '—';
+    for (var k = 0; k < CASES.length; k++) {
+      if (CASES[k].id === caseId) caseTitle = CASES[k].title;
+    }
 
     document.getElementById('result').innerHTML =
       '<div class="msg ok">Команда зарегистрирована</div>' +
       '<p><b>' + team.name + '</b></p>' +
       '<p class="badge">Токен: ' + team.token + '</p>' +
+      '<p>Ваш кейс: <b>' + caseTitle + '</b></p>' +
       '<p style="margin-top:16px;">' +
         '<a class="btn btn-secondary" href="join.html?token=' + team.token + '&team=' + team.id + '">Открыть страницу команды →</a>' +
       '</p>';
