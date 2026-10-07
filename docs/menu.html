@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Меню туров — Кейс-чемпионат</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .tour-card {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 18px 20px; background: #fff;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); margin-bottom: 14px;
+    }
+    .tour-num {
+      flex-shrink: 0; width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--primary-soft); color: var(--primary-dark);
+      font-weight: 800; font-size: 20px; border-radius: 50%;
+    }
+    .tour-body { flex-grow: 1; }
+    .tour-body h3 { margin: 0 0 6px; font-size: 17px; }
+    .tour-body p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+    .tour-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .status-done {
+      display: inline-block; padding: 3px 10px; font-size: 12px;
+      font-weight: 700; border-radius: 999px;
+      background: #e6f4ea; color: var(--ok);
+    }
+    .status-todo {
+      display: inline-block; padding: 3px 10px; font-size: 12px;
+      font-weight: 700; border-radius: 999px;
+      background: #eef1f5; color: var(--muted);
+    }
+    .tour-card.locked { opacity: 0.55; }
+    .team-header {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      box-shadow: var(--shadow); margin-bottom: 20px;
+    }
+    .team-header h2 { margin: 0 0 6px; }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">Координационный центр · ЯрГУ им. П.Г. Демидова</div>
+    <h1>Кейс-чемпионат для студентов</h1>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="team-header" id="teamHeader">Загрузка...</div>
+
+  <div id="tours"></div>
+
+</main>
+
+<footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  var teamId = params.get('team');
+  var token  = params.get('token');
+
+  function getTeams() {
+    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
+    catch (e) { return []; }
+  }
+
+  var teamName = 'Команда #' + teamId;
+
+  var tours = [
+    { num: 1, key: '1', title: 'Правовой щит',
+      desc: 'Квиз из 30 вопросов + ситуационный кейс',
+      href: 'play.html', ready: true },
+    { num: 2, key: '2', title: 'Психологический иммунитет',
+      desc: 'Разбор манипуляций + ситуационные задачи',
+      href: 'play2.html', ready: false },
+    { num: 3, key: '3', title: 'Контент-баттл',
+      desc: 'Командный хакатон по созданию профилактического контента',
+      href: 'play3.html', ready: false },
+    { num: 4, key: '4', title: 'Алгоритм действий и поведение в ЧС',
+      desc: 'Ролевая игра и разбор ошибок',
+      href: 'play4.html', ready: false }
+  ];
+
+  var teamCaseId = 1;
+  if (teamId) {
+    var teams = getTeams();
+    for (var i = 0; i < teams.length; i++) {
+      if (String(teams[i].id) === String(teamId)) {
+        teamName = teams[i].name;
+        if (teams[i].caseId) teamCaseId = teams[i].caseId;
+        break;
+      }
+    }
+  }
+
+  var CASES = {
+    1: { title: 'Переписка в мессенджере' },
+    2: { title: 'Пост в соцсети' },
+    3: { title: 'Подозрительный предмет в вузе' },
+    4: { title: 'Лёгкий заработок' }
+  };
+
+  document.getElementById('teamHeader').innerHTML =
+    '<h2>' + teamName + '</h2>' +
+    '<p style="color: var(--muted); margin: 0;">Команда #' + teamId +
+    '. Ваш ситуационный кейс Тура 1: <b>' +
+    (CASES[teamCaseId] ? CASES[teamCaseId].title : '—') + '</b>.</p>';
+
+  var box = document.getElementById('tours');
+  box.innerHTML = '';
+
+  tours.forEach(function(t) {
+    // проверяем, пройден ли тур
+    var done = false;
+    if (t.num === 1) {
+      try {
+        var r = JSON.parse(localStorage.getItem('result_team_' + teamId) || 'null');
+        if (r && r.correct !== undefined) done = true;
+      } catch (e) {}
+    }
+    if (t.num === 2) {
+      try {
+        var r2 = JSON.parse(localStorage.getItem('result2_team_' + teamId) || 'null');
+        if (r2) done = true;
+      } catch (e) {}
+    }
+
+    var statusHtml = done
+      ? '<span class="status-done">✓ пройден</span>'
+      : '<span class="status-todo">не начат</span>';
+
+    var btnHtml = t.ready
+      ? '<a class="btn btn-primary" href="' + t.href + '?team=' + teamId + '&token=' + token + '">' +
+          (done ? 'Открыть заново' : 'Начать') + ' →</a>'
+      : '<button class="btn btn-secondary" disabled style="opacity:0.6; cursor:not-allowed;">Скоро</button>';
+
+    var card = document.createElement('div');
+    card.className = 'tour-card' + (t.ready ? '' : ' locked');
+    card.innerHTML =
+      '<div class="tour-num">' + t.num + '</div>' +
+      '<div class="tour-body">' +
+        '<h3>Тур ' + t.num + '. ' + t.title + ' ' + statusHtml + '</h3>' +
+        '<p>' + t.desc + '</p>' +
+        '<div class="tour-actions">' + btnHtml + '</div>' +
+      '</div>';
+    box.appendChild(card);
+  });
+
+  // кнопка "обновить"
+  var refreshRow = document.createElement('div');
+  refreshRow.style.marginTop = '20px';
+  refreshRow.innerHTML = '<button class="btn btn-secondary" onclick="location.reload()">Обновить статусы</button>';
+  box.appendChild(refreshRow);
+</script>
+
+</body>
+</html>

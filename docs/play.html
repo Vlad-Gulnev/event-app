@@ -249,7 +249,7 @@
       '<textarea id="caseAnswer" placeholder="Напишите развёрнутый ответ команды..."></textarea>' +
       '<div class="actions">' +
         '<button class="btn btn-primary" onclick="submitCase()">Отправить ответ на кейс</button>' +
-        '<button class="btn btn-secondary" onclick="scrollToTop()">↑ Вернуться к квизу</button>' +
+        '<a class="btn btn-secondary" href="menu.html?team=' + teamId + '&token=' + token + '">← В меню туров</a>' +
       '</div>' +
       '</div>';
 
@@ -259,10 +259,6 @@
       var el = document.getElementById('caseTitle');
       if (el) window.scrollTo({ top: el.offsetTop - 20, behavior: 'smooth' });
     }, 100);
-  }
-
-  function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function submitCase() {
@@ -282,7 +278,8 @@
     localStorage.setItem(key, JSON.stringify(data));
 
     document.getElementById('caseResultBox').innerHTML =
-      '<div class="msg ok" style="margin-top:16px;">Ответ на кейс отправлен. Жюри оценит его и внесёт баллы.</div>';
+      '<div class="msg ok" style="margin-top:16px;">Ответ на кейс отправлен. Жюри оценит его и внесёт баллы.</div>' +
+      '<p style="margin-top:16px;"><a class="btn btn-primary" href="menu.html?team=' + teamId + '&token=' + token + '">← Вернуться в меню туров</a></p>';
 
     var btn = document.querySelector('#caseBox button');
     if (btn) { btn.disabled = true; btn.textContent = 'Ответ отправлен'; }
