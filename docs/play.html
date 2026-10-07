@@ -20,15 +20,19 @@
     }
     .ticket h3 { margin: 0 0 10px; color: var(--primary-dark); }
     .ticket .big { font-size: 32px; font-weight: 800; color: var(--primary-dark); }
-    .case-text { background: #f7f9fc; border-left: 4px solid var(--primary); padding: 14px 18px; margin: 12px 0; border-radius: 6px; }
+    .case-text {
+      background: #f7f9fc; border-left: 4px solid var(--primary);
+      padding: 14px 18px; margin: 12px 0; border-radius: 6px;
+    }
     .case-text p { margin: 8px 0; }
     textarea {
-      width: 100%; min-height: 140px;
+      width: 100%; min-height: 160px;
       padding: 12px; font-family: inherit; font-size: 16px;
       border: 1px solid var(--border); border-radius: var(--radius);
-      resize: vertical;
+      resize: vertical; box-sizing: border-box;
     }
     .stage-title { margin-top: 40px; padding-top: 24px; border-top: 2px solid var(--border); }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -43,7 +47,7 @@
 <main class="container">
   <p id="who" style="color: var(--muted); font-size: 14px;"></p>
 
-  <h2>Этап 1. Квиз (30 вопросов)</h2>
+  <h2 id="stage1Title">Этап 1. Квиз (30 вопросов)</h2>
   <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
 
   <div id="questions"></div>
@@ -68,7 +72,6 @@
   var teamId = params.get('team');
   var token  = params.get('token');
 
-  // Кейсы с текстами
   var CASES = {
     1: {
       title: 'Переписка в мессенджере',
@@ -219,15 +222,15 @@
         '<p><b>Команда:</b> ' + teamName + '</p>' +
         '<p><b>Балл квиза:</b> <span class="big">' + correct + ' / ' + questions.length + '</span></p>' +
         '<p style="color:#666; font-size:13px;">Теперь переходите к этапу 2 — ситуационному кейсу.</p>' +
+        '<div class="actions">' +
+          '<button class="btn btn-primary" onclick="openCase()">Перейти к этапу 2. Ситуационный кейс →</button>' +
+        '</div>' +
       '</div>';
 
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').textContent = 'Квиз отправлен';
 
-    // Открываем кейс
-    openCase();
-
-    window.scrollTo({ top: document.getElementById('caseTitle').offsetTop, behavior: 'smooth' });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
   function openCase() {
@@ -244,10 +247,22 @@
     });
     html += '<label for="caseAnswer"><b>Ваш ответ:</b></label>' +
       '<textarea id="caseAnswer" placeholder="Напишите развёрнутый ответ команды..."></textarea>' +
-      '<button class="btn btn-primary" style="margin-top:12px;" onclick="submitCase()">Отправить ответ на кейс</button>' +
+      '<div class="actions">' +
+        '<button class="btn btn-primary" onclick="submitCase()">Отправить ответ на кейс</button>' +
+        '<button class="btn btn-secondary" onclick="scrollToTop()">↑ Вернуться к квизу</button>' +
+      '</div>' +
       '</div>';
 
     document.getElementById('caseBox').innerHTML = html;
+
+    setTimeout(function() {
+      var el = document.getElementById('caseTitle');
+      if (el) window.scrollTo({ top: el.offsetTop - 20, behavior: 'smooth' });
+    }, 100);
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function submitCase() {
@@ -269,8 +284,8 @@
     document.getElementById('caseResultBox').innerHTML =
       '<div class="msg ok" style="margin-top:16px;">Ответ на кейс отправлен. Жюри оценит его и внесёт баллы.</div>';
 
-    document.getElementById('caseBox').querySelector('button').disabled = true;
-    document.getElementById('caseBox').querySelector('button').textContent = 'Ответ отправлен';
+    var btn = document.querySelector('#caseBox button');
+    if (btn) { btn.disabled = true; btn.textContent = 'Ответ отправлен'; }
   }
 
   render();
