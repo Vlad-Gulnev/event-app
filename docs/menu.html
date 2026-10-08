@@ -6,18 +6,18 @@
   <title>Меню туров — Кейс-чемпионат</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .team-header { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
-    .team-header h2 { margin: 0 0 6px; }
-    .tour-card { display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 14px; }
-    .tour-num { flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary-dark); font-weight: 800; font-size: 20px; border-radius: 50%; }
-    .tour-body { flex-grow: 1; }
-    .tour-body h3 { margin: 0 0 6px; font-size: 17px; }
-    .tour-body p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
-    .tour-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .status-done { display: inline-block; padding: 3px 10px; font-size: 12px; font-weight: 700; border-radius: 999px; background: #e6f4ea; color: var(--ok); }
-    .status-todo { display: inline-block; padding: 3px 10px; font-size: 12px; font-weight: 700; border-radius: 999px; background: #eef1f5; color: var(--muted); }
-    .tour-card.locked { opacity: 0.55; }
-    .game-badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 999px; background: #fff3cd; color: #856404; margin-left: 6px; vertical-align: middle; }
+    .team-header{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);margin-bottom:20px}
+    .team-header h2{margin:0 0 6px}
+    .tour-card{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px}
+    .tour-num{flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-dark);font-weight:800;font-size:20px;border-radius:50%}
+    .tour-body{flex-grow:1}
+    .tour-body h3{margin:0 0 6px;font-size:17px}
+    .tour-body p{margin:0 0 10px;font-size:14px;color:var(--muted)}
+    .tour-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .status-done{display:inline-block;padding:3px 10px;font-size:12px;font-weight:700;border-radius:999px;background:#e6f4ea;color:var(--ok)}
+    .status-todo{display:inline-block;padding:3px 10px;font-size:12px;font-weight:700;border-radius:999px;background:#eef1f5;color:var(--muted)}
+    .tour-card.locked{opacity:0.55}
+    .game-badge{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;border-radius:999px;background:#fff3cd;color:#856404;margin-left:6px;vertical-align:middle}
   </style>
 </head>
 <body>
@@ -37,88 +37,103 @@
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
+  var CASES = {
+    1: 'Переписка в мессенджере',
+    2: 'Пост в соцсети',
+    3: 'Подозрительный предмет в вузе',
+    4: 'Лёгкий заработок'
+  };
+
   var params = new URLSearchParams(location.search);
   var teamId = params.get('team');
   var token  = params.get('token');
-
-  function getTeams() {
-    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
-    catch (e) { return []; }
-  }
-
-  var teamName = 'Команда #' + teamId;
-  var teamCaseId = 1;
-  if (teamId) {
-    var teams = getTeams();
-    for (var i = 0; i < teams.length; i++) {
-      if (String(teams[i].id) === String(teamId)) {
-        teamName = teams[i].name;
-        if (teams[i].caseId) teamCaseId = teams[i].caseId;
-        break;
-      }
-    }
-  }
+  var team = null;
 
   var tours = [
-    { num: 1, title: 'Правовой щит', desc: 'Квиз из 30 вопросов + ситуационный кейс', href: 'play.html', ready: true, resultKey: 'result_team_' },
-    { num: 2, title: 'Психологический иммунитет', desc: 'Разбор манипуляций + ситуационные задачи', href: 'play2.html', ready: true, resultKey: 'result2_team_' },
-    { num: 3, title: 'Контент-баттл', desc: 'Командный хакатон по созданию профилактического контента', href: 'play3.html', ready: true, resultKey: 'result3_team_' },
-    { num: 4, title: 'Найди опасность', desc: 'Игра-детектив: найди опасные объекты и собери алгоритм действий', href: 'play4.html', ready: true, resultKey: 'result4_team_', badge: 'Игра-детектив' }
+    { num: 1, title: 'Правовой щит', desc: 'Квиз из 30 вопросов + ситуационный кейс', href: 'play.html', ready: true },
+    { num: 2, title: 'Психологический иммунитет', desc: 'Разбор манипуляций + ситуационные задачи', href: 'play2.html', ready: true },
+    { num: 3, title: 'Контент-баттл', desc: 'Командный хакатон по созданию профилактического контента', href: 'play3.html', ready: true },
+    { num: 4, title: 'Найди опасность', desc: 'Игра-детектив: найди опасные объекты и собери алгоритм действий', href: 'play4.html', ready: true, badge: '🎮 Игра-детектив' }
   ];
 
-  var CASES = {
-    1: { title: 'Переписка в мессенджере' },
-    2: { title: 'Пост в соцсети' },
-    3: { title: 'Подозрительный предмет в вузе' },
-    4: { title: 'Лёгкий заработок' }
-  };
-
-  document.getElementById('teamHeader').innerHTML =
-    '<h2>' + teamName + '</h2>' +
-    '<p style="color: var(--muted); margin: 0;">Команда #' + teamId +
-    '. Ваш ситуационный кейс Тура 1: <b>' +
-    (CASES[teamCaseId] ? CASES[teamCaseId].title : '—') + '</b>.</p>';
-
-  var box = document.getElementById('tours');
-  box.innerHTML = '';
-
-  tours.forEach(function(t) {
-    var done = false;
-    try {
-      var r = JSON.parse(localStorage.getItem(t.resultKey + teamId) || 'null');
-      if (r) done = true;
-    } catch (e) {}
-
-    var statusHtml = done
-      ? '<span class="status-done">✓ пройден</span>'
-      : '<span class="status-todo">не начат</span>';
-
-    var badgeHtml = t.badge ? '<span class="game-badge">🎮 ' + t.badge + '</span>' : '';
-
-    var btnHtml;
-    if (t.ready) {
-      btnHtml = '<a class="btn btn-primary" href="' + t.href + '?team=' + teamId + '&token=' + token + '">' +
-                (done ? 'Открыть заново' : 'Начать') + ' →</a>';
-    } else {
-      btnHtml = '<button class="btn btn-secondary" disabled style="opacity:0.6; cursor:not-allowed;">Скоро</button>';
+  function renderTeam() {
+    var header = document.getElementById('teamHeader');
+    if (!team) {
+      header.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
+      return;
     }
+    header.innerHTML =
+      '<h2>' + team.name + '</h2>' +
+      '<p style="color: var(--muted); margin: 0;">Команда #' + team.id +
+      '. Ваш ситуационный кейс Тура 1: <b>' +
+      (CASES[team.caseId] || '—') + '</b>.</p>';
+  }
 
-    var card = document.createElement('div');
-    card.className = 'tour-card' + (t.ready ? '' : ' locked');
-    card.innerHTML =
-      '<div class="tour-num">' + t.num + '</div>' +
-      '<div class="tour-body">' +
-        '<h3>Тур ' + t.num + '. ' + t.title + ' ' + statusHtml + badgeHtml + '</h3>' +
-        '<p>' + t.desc + '</p>' +
-        '<div class="tour-actions">' + btnHtml + '</div>' +
-      '</div>';
-    box.appendChild(card);
-  });
+  function loadStatuses() {
+    if (!team) return;
+    fetch('/api/admin/all')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var mine = data.teams.find(function(x) { return String(x.id) === String(team.id); });
+        var box = document.getElementById('tours');
+        box.innerHTML = '';
+        tours.forEach(function(t) {
+          var done = false;
+          if (mine) {
+            if (t.num === 1 && mine.t1Quiz && mine.t1Quiz.time) done = true;
+            if (t.num === 2 && mine.t2 && mine.t2.time) done = true;
+            if (t.num === 3 && mine.t3 && mine.t3.time) done = true;
+            if (t.num === 4 && mine.t4 && mine.t4.time) done = true;
+          }
+          var statusHtml = done
+            ? '<span class="status-done">✓ пройден</span>'
+            : '<span class="status-todo">не начат</span>';
+          var badgeHtml = t.badge ? '<span class="game-badge">' + t.badge + '</span>' : '';
+          var link = t.href + '?team=' + team.id + '&token=' + team.token;
+          var card = document.createElement('div');
+          card.className = 'tour-card';
+          card.innerHTML =
+            '<div class="tour-num">' + t.num + '</div>' +
+            '<div class="tour-body">' +
+              '<h3>Тур ' + t.num + '. ' + t.title + ' ' + statusHtml + badgeHtml + '</h3>' +
+              '<p>' + t.desc + '</p>' +
+              '<div class="tour-actions">' +
+                '<a class="btn btn-primary" href="' + link + '">' + (done ? 'Открыть заново' : 'Начать') + ' →</a>' +
+              '</div>' +
+            '</div>';
+          box.appendChild(card);
+        });
+        var refresh = document.createElement('div');
+        refresh.style.marginTop = '20px';
+        refresh.innerHTML = '<button class="btn btn-secondary" onclick="loadStatuses()">Обновить статусы</button>';
+        box.appendChild(refresh);
+      })
+      .catch(function(err) {
+        document.getElementById('tours').innerHTML = '<p style="color:var(--err);">Ошибка загрузки: ' + err.message + '</p>';
+      });
+  }
 
-  var refreshRow = document.createElement('div');
-  refreshRow.style.marginTop = '20px';
-  refreshRow.innerHTML = '<button class="btn btn-secondary" onclick="location.reload()">Обновить статусы</button>';
-  box.appendChild(refreshRow);
+  if (token && teamId) {
+    fetch('/api/teams/by-token?token=' + encodeURIComponent(token))
+      .then(function(r) { if (!r.ok) throw new Error('not found'); return r.json(); })
+      .then(function(t) {
+        if (!t || String(t.id) !== String(teamId)) throw new Error('mismatch');
+        team = t;
+        renderTeam();
+        loadStatuses();
+      })
+      .catch(function() {
+        document.getElementById('teamHeader').innerHTML =
+          '<h2>Команда не найдена</h2>' +
+          '<p>Обратитесь к организатору или зарегистрируйтесь заново.</p>' +
+          '<p><a class="btn btn-primary" href="join.html">Регистрация команды</a></p>';
+      });
+  } else {
+    document.getElementById('teamHeader').innerHTML =
+      '<h2>Нет данных команды</h2>' +
+      '<p>Откройте страницу по ссылке из QR-кода вашей команды.</p>' +
+      '<p><a class="btn btn-primary" href="join.html">Регистрация команды</a></p>';
+  }
 </script>
 
 </body>
