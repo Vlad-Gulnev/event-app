@@ -18,15 +18,15 @@
     .scene-wrap { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); user-select: none; touch-action: manipulation; }
     .scene-wrap img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; }
     .hotspot {
-      position: absolute;
-      width: 10%;
-      height: 10%;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      background: transparent;
-      cursor: pointer;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
+  position: absolute;
+  width: 10%;
+  height: 10%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
+}
     .hotspot.found {
       background: rgba(46, 125, 50, 0.35);
       box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.6), 0 0 20px rgba(46, 125, 50, 0.6);
@@ -129,6 +129,7 @@
     .ticket .big { font-size: 32px; font-weight: 800; color: var(--primary-dark); }
     .hidden { display: none !important; }
 
+    /* Адаптив */
     @media (max-width: 640px) {
       .game-nav { padding: 10px 12px; }
       .game-nav .stat { font-size: 14px; }
@@ -152,7 +153,7 @@
 
   <p id="who" style="color: var(--muted); font-size: 14px;"></p>
 
-  <!-- ============ ИНТРО ============ -->
+  <!-- ============ ЭКРАН 1. ИНТРО ============ -->
   <section id="introScreen">
     <div class="intro-hero">
       <div class="intro-icon">🔍</div>
@@ -175,13 +176,20 @@
     </div>
   </section>
 
-  <!-- ============ ИГРА ============ -->
+  <!-- ============ ЭКРАН 2. ИГРА ============ -->
   <section id="gameScreen" class="hidden">
 
     <div class="game-nav">
-      <div class="stat"><span id="levelIndicator">Уровень 1 / 6</span></div>
-      <div class="stat"><span id="scoreIndicator">0</span><small>очков</small></div>
-      <div class="stat" id="timerBox"><span id="timerDisplay">60:00</span></div>
+      <div class="stat">
+        <span id="levelIndicator">Уровень 1 / 6</span>
+      </div>
+      <div class="stat">
+        <span id="scoreIndicator">0</span>
+        <small>очков</small>
+      </div>
+      <div class="stat" id="timerBox">
+        <span id="timerDisplay">60:00</span>
+      </div>
       <button class="copy-btn" onclick="toggleSound()" id="soundBtn" title="Звук">🔊</button>
     </div>
 
@@ -191,6 +199,7 @@
 
     <div class="scene-wrap" id="sceneWrap">
       <img id="sceneImg" src="" alt="">
+      <!-- сюда добавляются hot-spots и эффекты -->
     </div>
 
     <div class="scene-info">
@@ -206,7 +215,7 @@
 
   <!-- ============ МОДАЛКА АЛГОРИТМА ============ -->
   <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-sheet">
+    <div class="modal-sheet" id="modalSheet">
       <h3>Собери правильный порядок</h3>
       <p class="sub">Перетаскивай плитки пальцем или мышкой. Как только шаг окажется на своём месте — он зафиксируется.</p>
       <ul class="sortable-list" id="sortableList"></ul>
@@ -218,33 +227,44 @@
     </div>
   </div>
 
-  <!-- ============ ФИНАЛ ============ -->
+  <!-- ============ ЭКРАН 3. ФИНАЛ ИГРЫ ============ -->
   <section id="finalScreen" class="hidden">
     <div class="final-hero">
       <div class="medal" id="medalIcon">🥇</div>
       <h1 id="finalTitle">Отлично!</h1>
       <p id="finalSub" style="color: var(--muted);"></p>
       <div class="final-stats">
-        <div class="stat-box"><b id="statFound">0</b><small>Объектов найдено</small></div>
-        <div class="stat-box"><b id="statAlgorithms">0</b><small>Алгоритмов верно</small></div>
-        <div class="stat-box"><b id="statScore">0</b><small>Очков</small></div>
-        <div class="stat-box"><b id="statTime">0:00</b><small>Время игры</small></div>
+        <div class="stat-box">
+          <b id="statFound">0</b>
+          <small>Объектов найдено</small>
+        </div>
+        <div class="stat-box">
+          <b id="statAlgorithms">0</b>
+          <small>Алгоритмов верно</small>
+        </div>
+        <div class="stat-box">
+          <b id="statScore">0</b>
+          <small>Очков</small>
+        </div>
+        <div class="stat-box">
+          <b id="statTime">0:00</b>
+          <small>Время игры</small>
+        </div>
       </div>
       <p style="margin-top: 20px; color: var(--muted); font-size: 14px;">Этап 1 пройден. Дальше — симулятор с развилками.</p>
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+      <div style="margin-top: 20px;">
         <button class="btn btn-primary" onclick="goToStage2()" style="padding: 14px 32px; font-size: 17px;">▶ Этап 2. Симулятор</button>
-        <a class="btn btn-secondary" href="#" id="backFromFinal" style="padding: 14px 24px;">← В меню туров</a>
       </div>
     </div>
   </section>
 
-  <!-- ============ ЭТАП 2 ============ -->
+  <!-- ============ ЭКРАН 4. ЭТАП 2 (симулятор) ============ -->
   <section id="stage2Screen" class="hidden">
-    <h2 style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">Этап 2. Симулятор</h2>
+    <h2 class="stage-title" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">Этап 2. Симулятор</h2>
     <div id="sims"></div>
     <div class="card" style="margin-top: 20px;">
       <button class="btn btn-primary" id="submitStage2Btn" onclick="submitStage2()" style="margin-right: 10px;">Отправить ответы</button>
-      <a class="btn btn-secondary" href="#" id="backLink2" style="margin-left: 10px;">← В меню туров</a>
+      <a class="btn btn-secondary" href="menu.html?team=0&token=0" id="backLink" style="margin-left: 10px;">← В меню туров</a>
     </div>
     <div id="ticketBox"></div>
   </section>
@@ -254,11 +274,13 @@
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
+  /* ============================================================
+     ПАРАМЕТРЫ
+     ============================================================ */
   var params = new URLSearchParams(location.search);
   var teamId = params.get('team');
   var token  = params.get('token');
-  document.getElementById('backFromFinal').href = 'menu.html?team=' + teamId + '&token=' + token;
-  document.getElementById('backLink2').href = 'menu.html?team=' + teamId + '&token=' + token;
+  document.getElementById('backLink').href = 'menu.html?team=' + teamId + '&token=' + token;
 
   function getTeams() {
     try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
@@ -274,66 +296,97 @@
   }
   document.getElementById('who').textContent = teamName;
 
-  /* ==== УРОВНИ ==== */
+  /* ============================================================
+     УРОВНИ И КООРДИНАТЫ
+     ============================================================ */
   var LEVELS = [
     {
       id: 'find-1',
       title: 'Уровень 1. Холл университета',
       img: 'img/find-1.jpg',
-      hotspots: [{ x: 39.4, y: 85.9 }],
+      hotspots: [
+        { x: 39.4, y: 85.9 }
+      ],
       algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
       id: 'find-2',
       title: 'Уровень 2. Аудитория',
       img: 'img/find-2.jpg',
-      hotspots: [{ x: 49.2, y: 67.1 }, { x: 48.5, y: 86.1 }],
-      algorithm: ['stop', 'leave', 'warn', 'call', 'safe']
+      hotspots: [
+        { x: 49.2, y: 67.1 },
+        { x: 48.5, y: 86.1 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
       id: 'find-3',
       title: 'Уровень 3. Кофейня',
       img: 'img/find-3.png',
-      hotspots: [{ x: 48.6, y: 84.9 }, { x: 60.1, y: 89.9 }],
-      algorithm: ['leave', 'stop', 'warn', 'safe', 'call']
+      hotspots: [
+        { x: 48.6, y: 84.9 },
+        { x: 60.1, y: 89.9 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
       id: 'find-4',
       title: 'Уровень 4. Вход в вуз',
       img: 'img/find-4.jpg',
-      hotspots: [{ x: 70.7, y: 87.5 }, { x: 80.9, y: 55.4 }],
-      algorithm: ['leave', 'warn', 'safe', 'call']
+      hotspots: [
+        { x: 70.7, y: 87.5 },
+        { x: 80.9, y: 55.4 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
       id: 'find-5',
       title: 'Уровень 5. Вокзал',
       img: 'img/find-5.jpg',
-      hotspots: [{ x: 75.6, y: 89.9 }],
+      hotspots: [
+        { x: 75.6, y: 89.9 }
+      ],
       algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
       id: 'find-6',
       title: 'Уровень 6. Кабинет права',
       img: 'img/find-6.png',
-      hotspots: [{ x: 61.1, y: 64.3 }, { x: 73.5, y: 49 }],
-      algorithm: ['stop', 'leave', 'warn', 'safe', 'call']
+      hotspots: [
+        { x: 61.1, y: 64.3 },
+        { x: 73.5, y: 49 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     }
   ];
 
+  /* ============================================================
+     АЛГОРИТМ — плитки
+     ============================================================ */
   var TILES = {
-    stop:  { text: 'Не трогать, не подходить', icon: 'img/icon-stop.png' },
+    stop:  { text: 'Не трогать, не подходить',   icon: 'img/icon-stop.png' },
     leave: { text: 'Отойти на безопасное расстояние', icon: 'img/icon-leave.png' },
     warn:  { text: 'Сообщить охране / администрации', icon: 'img/icon-warn.png' },
-    call:  { text: 'Позвонить в полицию (112)', icon: 'img/icon-call.png' },
-    safe:  { text: 'Сохранять спокойствие, не создавать панику', icon: 'img/icon-safe.png' }
+    call:  { text: 'Позвонить в полицию (112)',  icon: 'img/icon-call.png' }
   };
 
+  /* ============================================================
+     СОСТОЯНИЕ ИГРЫ
+     ============================================================ */
   var state = {
-    levelIdx: 0, score: 0, totalFound: 0, algorithmsCorrect: 0,
-    totalMisses: 0, startTime: 0, soundOn: true
+    levelIdx: 0,
+    score: 0,
+    totalFound: 0,
+    algorithmsCorrect: 0,
+    totalMisses: 0,
+    startTime: 0,
+    levelStartTime: 0,
+    soundOn: true
   };
 
-  /* ==== ЗВУК ==== */
+  /* ============================================================
+     ЗВУК (WebAudio)
+     ============================================================ */
   var audioCtx = null;
   function initAudio() {
     if (!audioCtx) {
@@ -341,28 +394,31 @@
       catch (e) {}
     }
   }
-  function playTone(f, d, t, v) {
+  function playTone(freq, duration, type, vol) {
     if (!state.soundOn || !audioCtx) return;
-    var o = audioCtx.createOscillator();
-    var g = audioCtx.createGain();
-    o.type = t || 'sine';
-    o.frequency.value = f;
-    g.gain.setValueAtTime(v || 0.15, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + d);
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
   }
-  function soundTap()   { playTone(600, 0.05, 'square', 0.08); }
-  function soundFound() { playTone(880, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(1320, 0.2, 'sine', 0.2); }, 100); }
-  function soundMiss()  { playTone(180, 0.15, 'sawtooth', 0.12); }
-  function soundLock()  { playTone(1000, 0.08, 'triangle', 0.15); }
-  function soundWin()   { playTone(660, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(880, 0.15, 'sine', 0.2); }, 150); setTimeout(function(){ playTone(1320, 0.3, 'sine', 0.2); }, 300); }
+  function soundTap()    { playTone(600, 0.05, 'square', 0.08); }
+  function soundFound()  { playTone(880, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(1320, 0.2, 'sine', 0.2); }, 100); }
+  function soundMiss()   { playTone(180, 0.15, 'sawtooth', 0.12); }
+  function soundLock()   { playTone(1000, 0.08, 'triangle', 0.15); }
+  function soundWin()    { playTone(660, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(880, 0.15, 'sine', 0.2); }, 150); setTimeout(function(){ playTone(1320, 0.3, 'sine', 0.2); }, 300); }
+
   function toggleSound() {
     state.soundOn = !state.soundOn;
     document.getElementById('soundBtn').textContent = state.soundOn ? '🔊' : '🔇';
   }
 
-  /* ==== СТАРТ ==== */
+  /* ============================================================
+     СТАРТ ИГРЫ
+     ============================================================ */
   function startGame() {
     initAudio();
     state.startTime = Date.now();
@@ -376,35 +432,48 @@
 
   function loadLevel(idx) {
     state.levelIdx = idx;
+    state.levelStartTime = Date.now();
     timeLeftSec = 60;
 
     var lvl = LEVELS[idx];
     document.getElementById('levelTitle').textContent = lvl.title;
     document.getElementById('levelIndicator').textContent = 'Уровень ' + (idx + 1) + ' / ' + LEVELS.length;
     document.getElementById('progressBar').style.width = ((idx) / LEVELS.length * 100) + '%';
+
     document.getElementById('sceneImg').src = lvl.img;
+
+    // Сбросить счётчики
     document.getElementById('foundCount').textContent = '0 / ' + lvl.hotspots.length;
     document.getElementById('missCount').innerHTML = 'Промахов: <b>0</b>';
     document.getElementById('afterFind').classList.add('hidden');
 
+    // Очистить старые хотспоты
     var wrap = document.getElementById('sceneWrap');
     wrap.querySelectorAll('.hotspot, .tap-ripple, .tap-miss').forEach(function(el) { el.remove(); });
 
+    // Добавить хотспоты
     lvl.hotspots.forEach(function(h, i) {
       var el = document.createElement('div');
       el.className = 'hotspot';
       el.style.left = h.x + '%';
       el.style.top = h.y + '%';
+      el.dataset.idx = i;
       el.dataset.found = '0';
       wrap.appendChild(el);
     });
 
+    // Обработчик тапа на картинку (для промахов)
     wrap.onclick = function(e) {
       if (e.target.classList.contains('hotspot')) return;
       handleMiss(e);
     };
+
+    // Обработчики на хотспоты
     wrap.querySelectorAll('.hotspot').forEach(function(h) {
-      h.onclick = function(e) { e.stopPropagation(); handleHit(h, e); };
+      h.onclick = function(e) {
+        e.stopPropagation();
+        handleHit(h, e);
+      };
     });
 
     startTimer();
@@ -414,16 +483,22 @@
     if (timerInterval) clearInterval(timerInterval);
     updateTimerDisplay();
     timerInterval = setInterval(function() {
-      if (timeLeftSec > 0) { timeLeftSec--; updateTimerDisplay(); }
+      if (timeLeftSec > 0) {
+        timeLeftSec--;
+        updateTimerDisplay();
+      }
     }, 1000);
   }
+
   function updateTimerDisplay() {
     var m = Math.floor(timeLeftSec / 60);
     var s = timeLeftSec % 60;
     var el = document.getElementById('timerDisplay');
     el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-    el.style.color = timeLeftSec <= 10 ? '#c62828' : '';
+    if (timeLeftSec <= 10) el.style.color = '#c62828';
+    else el.style.color = '';
   }
+
   function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
   function handleHit(el, e) {
@@ -431,12 +506,16 @@
     el.dataset.found = '1';
     el.classList.add('found');
     soundFound();
+
+    // Вибрация
     if (navigator.vibrate) navigator.vibrate(30);
 
+    // Обновить счётчики
     var lvl = LEVELS[state.levelIdx];
     var foundNow = document.querySelectorAll('.hotspot.found').length;
     document.getElementById('foundCount').textContent = foundNow + ' / ' + lvl.hotspots.length;
 
+    // Показать риппл
     var rect = document.getElementById('sceneWrap').getBoundingClientRect();
     var rip = document.createElement('div');
     rip.className = 'tap-ripple';
@@ -445,9 +524,12 @@
     document.getElementById('sceneWrap').appendChild(rip);
     setTimeout(function() { rip.remove(); }, 700);
 
+    // Все найдены — открыть модалку
     if (foundNow === lvl.hotspots.length) {
       stopTimer();
-      setTimeout(function() { document.getElementById('afterFind').classList.remove('hidden'); }, 400);
+      setTimeout(function() {
+        document.getElementById('afterFind').classList.remove('hidden');
+      }, 400);
     }
   }
 
@@ -455,6 +537,8 @@
     state.totalMisses++;
     soundMiss();
     if (navigator.vibrate) navigator.vibrate(10);
+
+    var miss = document.querySelector('.hotspot.found');
     document.getElementById('missCount').innerHTML = 'Промахов: <b>' + state.totalMisses + '</b>';
 
     var wrap = document.getElementById('sceneWrap');
@@ -471,12 +555,16 @@
     setTimeout(function() { mark.remove(); }, 1000);
   }
 
-  /* ==== МОДАЛКА АЛГОРИТМА ==== */
+  /* ============================================================
+     МОДАЛКА АЛГОРИТМА
+     ============================================================ */
   var sortableInstance = null;
 
   function openAlgorithmModal() {
     var lvl = LEVELS[state.levelIdx];
     var order = lvl.algorithm.slice();
+
+    // Перемешать для игрока
     var shuffled = order.slice().sort(function() { return Math.random() - 0.5; });
 
     var list = document.getElementById('sortableList');
@@ -494,22 +582,28 @@
       list.appendChild(li);
     });
 
+    // SortableJS
     if (sortableInstance) sortableInstance.destroy();
     sortableInstance = new Sortable(list, {
-      animation: 200, handle: '.sortable-handle', ghostClass: 'dragging',
-      onEnd: function() { soundTap(); checkLockedItems(); }
+      animation: 200,
+      handle: '.sortable-handle',
+      ghostClass: 'dragging',
+      onEnd: function() {
+        soundTap();
+        checkLockedItems();
+      }
     });
 
     document.getElementById('checkBtn').disabled = true;
     document.getElementById('algorithmResult').textContent = '';
     document.getElementById('modalOverlay').classList.add('open');
-    checkLockedItems();
   }
 
   function checkLockedItems() {
     var lvl = LEVELS[state.levelIdx];
     var items = Array.from(document.querySelectorAll('#sortableList .sortable-item'));
     var allLocked = true;
+    var anyLocked = false;
 
     items.forEach(function(item, i) {
       var expected = lvl.algorithm[i];
@@ -517,7 +611,11 @@
         item.classList.add('locked');
         item.setAttribute('draggable', 'false');
         item.querySelector('.sortable-handle').style.visibility = 'hidden';
-        if (!item.dataset.wasLocked) { soundLock(); item.dataset.wasLocked = '1'; }
+        if (!item.dataset.wasLocked) {
+          soundLock();
+          item.dataset.wasLocked = '1';
+        }
+        anyLocked = true;
       } else {
         item.classList.remove('locked');
         item.setAttribute('draggable', 'true');
@@ -529,18 +627,18 @@
 
     document.getElementById('checkBtn').disabled = !allLocked;
     if (allLocked) {
-      document.getElementById('algorithmResult').textContent = '✓ Порядок верный!';
+      document.getElementById('algorithmResult').textContent = '✓ Порядок верный! Нажми «Проверить».';
       document.getElementById('algorithmResult').style.color = '#2e7d32';
-    } else {
-      document.getElementById('algorithmResult').textContent = '';
     }
   }
 
   function checkAlgorithm() {
+    // Все на месте — начисляем баллы
     var lvl = LEVELS[state.levelIdx];
-    var basePoints = lvl.hotspots.length;
-    var algoPoints = 3;
+    var basePoints = lvl.hotspots.length; // 1 балл за каждый найденный объект
+    var algoPoints = 3;                    // 3 балла за алгоритм
     var speedBonus = timeLeftSec >= 30 ? 1 : 0;
+
     state.score += basePoints + algoPoints + speedBonus;
     state.totalFound += lvl.hotspots.length;
     state.algorithmsCorrect++;
@@ -551,16 +649,23 @@
     closeModal();
     soundWin();
 
+    // Следующий уровень или финал
     if (state.levelIdx + 1 < LEVELS.length) {
-      setTimeout(function() { loadLevel(state.levelIdx + 1); }, 700);
+      setTimeout(function() {
+        loadLevel(state.levelIdx + 1);
+      }, 700);
     } else {
       setTimeout(showFinal, 700);
     }
   }
 
-  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
 
-  /* ==== ФИНАЛ ==== */
+  /* ============================================================
+     ФИНАЛЬНЫЙ ЭКРАН
+     ============================================================ */
   function showFinal() {
     stopTimer();
     document.getElementById('gameScreen').classList.add('hidden');
@@ -569,6 +674,7 @@
     var duration = Math.round((Date.now() - state.startTime) / 1000);
     var mins = Math.floor(duration / 60);
     var secs = duration % 60;
+
     var totalObjects = LEVELS.reduce(function(a, l) { return a + l.hotspots.length; }, 0);
 
     document.getElementById('statFound').textContent = state.totalFound + ' / ' + totalObjects;
@@ -576,6 +682,7 @@
     document.getElementById('statScore').textContent = state.score;
     document.getElementById('statTime').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
+    // Медаль
     var medal = '🥉';
     var title = 'Хорошо!';
     if (state.totalMisses === 0 && state.algorithmsCorrect === LEVELS.length) {
@@ -587,20 +694,31 @@
     document.getElementById('finalTitle').textContent = title;
     document.getElementById('finalSub').textContent = 'Промахов: ' + state.totalMisses;
 
+    // Сохранить результат тура
+    var result = {
+      teamId: teamId, teamName: teamName, tour: 4,
+      stage1: {
+        score: state.score,
+        totalFound: state.totalFound,
+        algorithmsCorrect: state.algorithmsCorrect,
+        totalMisses: state.totalMisses,
+        duration: duration
+      },
+      time: new Date().toISOString()
+    };
+    // Сохраним промежуточно
     var existing = {};
     try { existing = JSON.parse(localStorage.getItem('result4_team_' + teamId) || '{}'); } catch (e) {}
-    existing.stage1 = {
-      score: state.score, totalFound: state.totalFound,
-      algorithmsCorrect: state.algorithmsCorrect, totalMisses: state.totalMisses,
-      duration: duration
-    };
+    existing.stage1 = result.stage1;
     existing.teamName = teamName;
     existing.tour = 4;
     existing.time = new Date().toISOString();
     localStorage.setItem('result4_team_' + teamId, JSON.stringify(existing));
   }
 
-  /* ==== ЭТАП 2 ==== */
+  /* ============================================================
+     ЭТАП 2. СИМУЛЯТОР (компактная версия)
+     ============================================================ */
   function goToStage2() {
     document.getElementById('finalScreen').classList.add('hidden');
     document.getElementById('stage2Screen').classList.remove('hidden');
@@ -609,7 +727,8 @@
 
   var SIMULATIONS = [
     {
-      id: 'tg', title: 'Ситуация 1. Странное сообщение',
+      id: 'tg',
+      title: 'Ситуация 1. Странное сообщение',
       startScene: 's1',
       scenes: {
         s1: {
@@ -633,7 +752,8 @@
       }
     },
     {
-      id: 'bag', title: 'Ситуация 2. Бесхозная сумка',
+      id: 'bag',
+      title: 'Ситуация 2. Бесхозная сумка',
       startScene: 'b1',
       scenes: {
         b1: {
@@ -654,30 +774,6 @@
         end_good: { text: 'Ты действовал по алгоритму.', choices: [], final: true, score: 1 },
         end_meh: { text: 'Справился, но были ошибки.', choices: [], final: true, score: 0 },
         end_bad: { text: 'Ситуация закончилась плохо.', choices: [], final: true, score: 0 }
-      }
-    },
-    {
-      id: 'friend', title: 'Ситуация 3. Друг втягивается',
-      startScene: 'f1',
-      scenes: {
-        f1: {
-          text: 'Друг говорит: «Нашёл подработку — за 5000 ₽ надо просто отвезти коробку. Просили никому не говорить».',
-          choices: [
-            { text: 'Поздравить друга', next: 'end_bad', score: 0, feedback: 'Это опасная схема. Нельзя относиться к ней как к обычной подработке.' },
-            { text: 'Спросить, что внутри и почему нельзя говорить', next: 'f2_good', score: 1, feedback: 'Правильно. Эти два вопроса — красные флаги.' },
-            { text: 'Промолчать, чтобы не портить отношения', next: 'end_meh', score: 0, feedback: 'Молчание = соучастие. Друг может попасть в беду.' }
-          ]
-        },
-        f2_good: {
-          text: 'Друг: «Да не знаю, какая разница. Просто коробка». Что дальше?',
-          choices: [
-            { text: 'Скажу, что это опасно, и попрошу отказаться', next: 'end_good', score: 1, feedback: 'Правильно. Лучше потерять подработку, чем свободу.' },
-            { text: 'Соглашусь, что, наверное, ничего страшного', next: 'end_bad', score: 0, feedback: 'Нет. Это классическая схема вовлечения «курьеров».' }
-          ]
-        },
-        end_good: { text: 'Ты помог другу избежать беды.', choices: [], final: true, score: 1 },
-        end_meh: { text: 'В целом верно, но можно было решительнее.', choices: [], final: true, score: 0 },
-        end_bad: { text: 'Ситуация закончилась плохо для друга.', choices: [], final: true, score: 0 }
       }
     }
   ];
@@ -719,6 +815,7 @@
       });
       body += '<div id="sim_fb_' + sim.id + '"></div>';
     }
+
     el.innerHTML = header + body;
   }
 
@@ -783,6 +880,7 @@
     document.getElementById('submitStage2Btn').textContent = 'Отправлено';
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
+
 </script>
 
 </body>

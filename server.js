@@ -5,7 +5,8 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-// Раздаём статику из docs (актуальная версия сайта)
+// Раздаём статику из public и из docs
+app.use(express.static('docs'));
 app.use(express.static('docs'));
 
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
@@ -24,7 +25,6 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// ==== API Тура 1 ====
 app.get('/api/teams', (req, res) => {
   res.json(readDB().teams);
 });
@@ -53,7 +53,6 @@ app.get('/api/answers', (req, res) => {
   res.json(readDB().answers);
 });
 
-// ==== Сводка по Туру 1 ====
 app.get('/api/admin/summary', (req, res) => {
   const db = readDB();
   const tour = Number(req.query.tour || 1);
@@ -73,15 +72,18 @@ app.get('/api/admin/summary', (req, res) => {
       if (answered[i + 1] === c) points++;
     });
     return {
-      id: t.id, name: t.name, token: t.token,
-      answered: answers.length, points: points, maxPoints: correct.length
+      id: t.id,
+      name: t.name,
+      token: t.token,
+      answered: answers.length,
+      points: points,
+      maxPoints: correct.length
     };
   });
 
   res.json({ tour: tour, teams: summary });
 });
 
-// ==== Сброс тура ====
 app.post('/api/admin/reset', (req, res) => {
   const tour = Number(req.body.tour || 1);
   const db = readDB();
@@ -93,5 +95,5 @@ app.post('/api/admin/reset', (req, res) => {
 app.listen(3000, () => {
   console.log('Сервер: http://localhost:3000');
   console.log('Проверка API: http://localhost:3000/api/teams');
-  console.log('Debug: http://localhost:3000/debug.html');
+  console.log('Debug-страница: http://localhost:3000/debug.html');
 });
