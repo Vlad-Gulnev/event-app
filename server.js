@@ -4,10 +4,15 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+
+// Раздаём статику из docs (актуальная версия сайта)
+app.use(express.static('docs'));
 
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
 
+if (!fs.existsSync(path.dirname(DB_FILE))) {
+  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+}
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify({ teams: [], answers: [] }, null, 2));
 }
@@ -19,6 +24,7 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
+// ==== API Тура 1 ====
 app.get('/api/teams', (req, res) => {
   res.json(readDB().teams);
 });
@@ -47,16 +53,13 @@ app.get('/api/answers', (req, res) => {
   res.json(readDB().answers);
 });
 
-// сводка для админки: команды + сколько правильных ответов
+// ==== Сводка по Туру 1 ====
 app.get('/api/admin/summary', (req, res) => {
   const db = readDB();
   const tour = Number(req.query.tour || 1);
-
-  // правильные ответы для тура 1 (совпадают с play.html)
   const correctByTour = {
     1: [0,1,1,0,2,3,1,0,1,1,1,1,0,1,1,0,2,1,0,2,1,0,2,1,0,2,1,1,1,1]
   };
-
   const correct = correctByTour[tour] || [];
 
   const summary = db.teams.map(t => {
@@ -65,26 +68,20 @@ app.get('/api/admin/summary', (req, res) => {
     );
     let points = 0;
     const answered = {};
-    answers.forEach(a => {
-      answered[a.questionId] = a.answer;
-    });
+    answers.forEach(a => { answered[a.questionId] = a.answer; });
     correct.forEach((c, i) => {
       if (answered[i + 1] === c) points++;
     });
     return {
-      id: t.id,
-      name: t.name,
-      token: t.token,
-      answered: answers.length,
-      points: points,
-      maxPoints: correct.length
+      id: t.id, name: t.name, token: t.token,
+      answered: answers.length, points: points, maxPoints: correct.length
     };
   });
 
   res.json({ tour: tour, teams: summary });
 });
 
-// сброс ответов по туру (на случай перезапуска)
+// ==== Сброс тура ====
 app.post('/api/admin/reset', (req, res) => {
   const tour = Number(req.body.tour || 1);
   const db = readDB();
@@ -96,4 +93,5 @@ app.post('/api/admin/reset', (req, res) => {
 app.listen(3000, () => {
   console.log('Сервер: http://localhost:3000');
   console.log('Проверка API: http://localhost:3000/api/teams');
+  console.log('Debug: http://localhost:3000/debug.html');
 });
