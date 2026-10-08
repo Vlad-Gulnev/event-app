@@ -3,69 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Тур 4. Алгоритм действий и поведение в ЧС</title>
+  <title>Тур 4. Найди опасность</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-    .stage-title { color: var(--primary-dark); margin-top: 32px; padding-top: 20px; border-top: 2px solid var(--border); }
-    .scenario {
-      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 18px 20px; margin-bottom: 20px; box-shadow: var(--shadow);
-    }
-    .scenario h3 { margin: 0 0 10px; color: var(--primary-dark); font-size: 17px; }
-    .scenario .situation {
-      background: #f7f9fc; border-left: 4px solid var(--primary);
-      padding: 12px 16px; border-radius: 6px; margin: 10px 0 14px;
-      font-size: 15px;
-    }
-    .step-list { list-style: none; padding: 0; margin: 12px 0; }
-    .step-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; margin: 6px 0;
-      background: #fafbfd; border: 1px solid var(--border);
-      border-radius: 8px; cursor: grab;
-    }
-    .step-item.dragging { opacity: 0.4; }
-    .step-item .drag-handle {
-      font-size: 18px; color: var(--muted);
-      cursor: grab; user-select: none; min-width: 20px; text-align: center;
-    }
-    .step-item .step-text { flex-grow: 1; font-size: 15px; }
-    .step-item .arrows { display: flex; gap: 4px; }
-    .step-item .arrows button {
-      width: 32px; height: 32px; padding: 0;
-      background: #eef1f5; border: 1px solid var(--border);
-      border-radius: 6px; cursor: pointer; font-size: 14px;
-      font-family: inherit;
-    }
-    .step-item .arrows button:hover { background: #e2e7ee; }
-    .step-item .arrows button:disabled { opacity: 0.4; cursor: not-allowed; }
+    body { -webkit-tap-highlight-color: transparent; }
+    .game-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; flex-wrap: wrap; }
+    .game-nav .stat { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--primary-dark); }
+    .game-nav .stat small { font-weight: 400; color: var(--muted); font-size: 12px; }
+    .progress-strip { height: 8px; background: #dfe6ec; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+    .progress-strip > div { height: 100%; background: linear-gradient(90deg, #157fc4, #0f5d92); transition: width 0.3s; }
+    .level-title { font-size: 17px; color: var(--primary-dark); font-weight: 700; margin: 0 0 12px; }
 
-    .story {
-      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 18px 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+    .scene-wrap { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); user-select: none; touch-action: manipulation; }
+    .scene-wrap img { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; }
+    .hotspot {
+      position: absolute;
+      width: 14%;
+      height: 14%;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(200, 16, 46, 0.15);
+      cursor: pointer;
+      transition: background 0.3s, box-shadow 0.3s;
     }
-    .story h3 { margin: 0 0 8px; color: var(--primary-dark); font-size: 16px; }
-    .story .story-text {
-      background: #fdf6e3; border-left: 4px solid #d4a017;
-      padding: 12px 16px; border-radius: 6px; font-size: 15px;
-      margin-bottom: 12px;
+    .hotspot.found {
+      background: rgba(46, 125, 50, 0.35);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.6), 0 0 20px rgba(46, 125, 50, 0.6);
+      animation: pulse 1.2s ease-in-out;
+      pointer-events: none;
     }
-    textarea {
-      width: 100%; min-height: 120px; padding: 12px;
-      font-family: inherit; font-size: 15px;
-      border: 1px solid var(--border); border-radius: var(--radius);
-      resize: vertical; box-sizing: border-box;
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.15); }
+      100% { transform: translate(-50%, -50%) scale(1); }
     }
-    .sticky-submit {
-      position: sticky; bottom: 0;
-      background: rgba(245,247,250,0.95); backdrop-filter: blur(6px);
-      padding: 12px 0; margin-top: 24px;
-      border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      z-index: 5;
+    .tap-ripple {
+      position: absolute; width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(255,255,255,0.6); transform: translate(-50%, -50%) scale(0);
+      pointer-events: none; animation: ripple 0.6s ease-out forwards;
     }
+    @keyframes ripple { to { transform: translate(-50%, -50%) scale(3); opacity: 0; } }
+    .tap-miss {
+      position: absolute; width: 26px; height: 26px; color: #c62828; font-size: 22px; font-weight: 800;
+      transform: translate(-50%, -50%); pointer-events: none;
+      animation: missFade 1s ease-out forwards;
+    }
+    @keyframes missFade { 0% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -100%); } }
+
+    .scene-info { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 0; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+    .scene-info b { color: var(--primary-dark); }
+
+    /* ================ Модалка алгоритма ================ */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: #fff; width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto;
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+      animation: slideUp 0.35s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-sheet h3 { margin: 0 0 6px; color: var(--primary-dark); font-size: 18px; }
+    .modal-sheet .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+
+    .sortable-list { list-style: none; padding: 0; margin: 0; }
+    .sortable-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; margin: 8px 0;
+      background: #fff; border: 2px solid var(--border);
+      border-radius: 10px; cursor: grab;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .sortable-item.dragging { opacity: 0.5; }
+    .sortable-item.locked { background: #e6f4ea; border-color: #2e7d32; cursor: default; }
+    .sortable-item img { width: 42px; height: 42px; flex-shrink: 0; }
+    .sortable-item .text { flex-grow: 1; font-size: 14px; font-weight: 600; }
+    .sortable-item .check { color: #2e7d32; font-weight: 800; font-size: 18px; opacity: 0; transition: opacity 0.2s; }
+    .sortable-item.locked .check { opacity: 1; }
+    .sortable-handle { color: var(--muted); font-size: 18px; user-select: none; cursor: grab; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1; min-width: 140px; text-align: center; }
+
+    /* ================ Интро-экран ================ */
+    .intro-hero {
+      text-align: center; padding: 30px 20px;
+      background: linear-gradient(135deg, #157fc4, #0f5d92);
+      color: #fff; border-radius: var(--radius); margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(21, 127, 196, 0.3);
+    }
+    .intro-hero h1 { color: #fff; margin: 0 0 8px; font-size: 26px; }
+    .intro-hero p { color: rgba(255,255,255,0.9); margin: 0; font-size: 15px; }
+    .intro-icon { font-size: 56px; margin-bottom: 12px; }
+    .rules { list-style: none; padding: 0; margin: 16px 0; }
+    .rules li { padding: 10px 14px; background: #f7f9fc; border-left: 4px solid var(--primary); border-radius: 6px; margin: 8px 0; font-size: 14px; }
+
+    /* ================ Финальный экран ================ */
+    .final-hero { text-align: center; padding: 30px 20px; background: #fff; border: 2px solid var(--primary); border-radius: var(--radius); }
+    .medal { font-size: 72px; margin: 0 0 12px; }
+    .final-hero h1 { font-size: 24px; margin: 0 0 12px; }
+    .final-stats { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin: 16px 0; }
+    .final-stats .stat-box { text-align: center; }
+    .final-stats .stat-box b { display: block; font-size: 28px; color: var(--primary-dark); }
+    .final-stats .stat-box small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ================ Этап 2 (симулятор) ================ */
+    .sim-container { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .sim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .sim-header h3 { margin: 0; color: var(--primary-dark); font-size: 17px; }
+    .sim-progress { font-size: 13px; color: var(--muted); }
+    .sim-text { background: #f7f9fc; border-left: 4px solid var(--primary); padding: 14px 18px; border-radius: 6px; margin: 12px 0 16px; font-size: 15px; line-height: 1.5; }
+    .sim-choice { display: block; width: 100%; text-align: left; padding: 14px 16px; margin: 8px 0; background: #fff; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 15px; transition: border-color 0.15s, background 0.15s; }
+    .sim-choice:hover { border-color: var(--primary); background: var(--primary-soft); }
+    .sim-choice.correct { background: #e6f4ea; border-color: #7fbb8c; }
+    .sim-choice.wrong { background: #fdecec; border-color: #e59898; }
+    .sim-choice:disabled { cursor: default; }
+    .sim-feedback { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 14px; }
+    .sim-feedback.ok { background: #e6f4ea; color: #1f6d2f; }
+    .sim-feedback.err { background: #fdecec; color: #a33131; }
+    .sim-result { background: #fff8e1; border-left: 4px solid #d4a017; padding: 16px 20px; border-radius: 8px; margin-top: 16px; }
+    .sim-result h4 { margin: 0 0 8px; color: #664d03; }
+
     .ticket { background: #fff; border: 2px solid var(--primary); border-radius: var(--radius); padding: 20px; margin: 20px 0; }
     .ticket .big { font-size: 32px; font-weight: 800; color: var(--primary-dark); }
+    .hidden { display: none !important; }
+
+    /* Адаптив */
+    @media (max-width: 640px) {
+      .game-nav { padding: 10px 12px; }
+      .game-nav .stat { font-size: 14px; }
+      .modal-sheet { padding: 16px; }
+      .sortable-item { padding: 10px 12px; }
+      .sortable-item img { width: 36px; height: 36px; }
+      .intro-hero h1 { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -78,36 +150,133 @@
 </header>
 
 <main class="container">
+
   <p id="who" style="color: var(--muted); font-size: 14px;"></p>
 
-  <div class="card">
-    <h2>Как играть</h2>
-    <p><b>Этап 1.</b> 5 сценариев. В каждом — расставьте шаги в правильном порядке: <b>что сначала, что потом</b>. Используйте стрелки ← → или перетаскивание.</p>
-    <p><b>Этап 2.</b> 3 истории с ошибками. Напишите: <b>что человек сделал не так</b> и <b>как было бы правильно</b>.</p>
+  <!-- ============ ЭКРАН 1. ИНТРО ============ -->
+  <section id="introScreen">
+    <div class="intro-hero">
+      <div class="intro-icon">🔍</div>
+      <h1>Найди опасность</h1>
+      <p>Игра-детектив по безопасности</p>
+    </div>
+
+    <div class="card">
+      <h2>Правила</h2>
+      <ul class="rules">
+        <li>🔎 На картинке спрятан <b>бесхозный предмет</b> или <b>подозрительный объект</b>. Найди его — тапни по нему.</li>
+        <li>🧩 Когда найдёшь — собери <b>правильный порядок действий</b> из плиток.</li>
+        <li>⏱ На уровень даётся <b>60 секунд</b>. Если уложишься — бонус.</li>
+        <li>🎯 Всего 6 уровней. Чем меньше промахов, тем выше медаль.</li>
+      </ul>
+      <p style="margin-top: 16px;"><b>Главное правило:</b> <span style="color: var(--primary-dark); font-weight: 700;">не трогать, не открывать, сообщить</span>.</p>
+      <div style="margin-top: 20px;">
+        <button class="btn btn-primary" onclick="startGame()" style="font-size: 18px; padding: 14px 32px;">▶ Начать игру</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ЭКРАН 2. ИГРА ============ -->
+  <section id="gameScreen" class="hidden">
+
+    <div class="game-nav">
+      <div class="stat">
+        <span id="levelIndicator">Уровень 1 / 6</span>
+      </div>
+      <div class="stat">
+        <span id="scoreIndicator">0</span>
+        <small>очков</small>
+      </div>
+      <div class="stat" id="timerBox">
+        <span id="timerDisplay">60:00</span>
+      </div>
+      <button class="copy-btn" onclick="toggleSound()" id="soundBtn" title="Звук">🔊</button>
+    </div>
+
+    <div class="progress-strip"><div id="progressBar" style="width: 0%;"></div></div>
+
+    <h2 class="level-title" id="levelTitle">Уровень 1. Холл университета</h2>
+
+    <div class="scene-wrap" id="sceneWrap">
+      <img id="sceneImg" src="" alt="">
+      <!-- сюда добавляются hot-spots и эффекты -->
+    </div>
+
+    <div class="scene-info">
+      <span>Найдено: <b id="foundCount">0 / 1</b></span>
+      <span id="missCount">Промахов: <b>0</b></span>
+    </div>
+
+    <div id="afterFind" class="hidden" style="margin-top: 20px;">
+      <button class="btn btn-primary" onclick="openAlgorithmModal()">🧩 Собрать алгоритм действий →</button>
+    </div>
+
+  </section>
+
+  <!-- ============ МОДАЛКА АЛГОРИТМА ============ -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-sheet" id="modalSheet">
+      <h3>Собери правильный порядок</h3>
+      <p class="sub">Перетаскивай плитки пальцем или мышкой. Как только шаг окажется на своём месте — он зафиксируется.</p>
+      <ul class="sortable-list" id="sortableList"></ul>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+        <button class="btn btn-primary" id="checkBtn" onclick="checkAlgorithm()" disabled>Проверить</button>
+      </div>
+      <p id="algorithmResult" style="margin-top: 12px; font-weight: 700; text-align: center;"></p>
+    </div>
   </div>
 
-  <h2 class="stage-title">Этап 1. Алгоритм действий</h2>
-  <div id="scenarios"></div>
+  <!-- ============ ЭКРАН 3. ФИНАЛ ИГРЫ ============ -->
+  <section id="finalScreen" class="hidden">
+    <div class="final-hero">
+      <div class="medal" id="medalIcon">🥇</div>
+      <h1 id="finalTitle">Отлично!</h1>
+      <p id="finalSub" style="color: var(--muted);"></p>
+      <div class="final-stats">
+        <div class="stat-box">
+          <b id="statFound">0</b>
+          <small>Объектов найдено</small>
+        </div>
+        <div class="stat-box">
+          <b id="statAlgorithms">0</b>
+          <small>Алгоритмов верно</small>
+        </div>
+        <div class="stat-box">
+          <b id="statScore">0</b>
+          <small>Очков</small>
+        </div>
+        <div class="stat-box">
+          <b id="statTime">0:00</b>
+          <small>Время игры</small>
+        </div>
+      </div>
+      <p style="margin-top: 20px; color: var(--muted); font-size: 14px;">Этап 1 пройден. Дальше — симулятор с развилками.</p>
+      <div style="margin-top: 20px;">
+        <button class="btn btn-primary" onclick="goToStage2()" style="padding: 14px 32px; font-size: 17px;">▶ Этап 2. Симулятор</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="sticky-submit">
-    <span style="font-size:14px; color:var(--muted);" id="progressText">Расставлено: 0 / 5</span>
-    <button class="btn btn-primary" id="submitBtn" onclick="submitAll()">Отправить ответы</button>
-  </div>
+  <!-- ============ ЭКРАН 4. ЭТАП 2 (симулятор) ============ -->
+  <section id="stage2Screen" class="hidden">
+    <h2 class="stage-title" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">Этап 2. Симулятор</h2>
+    <div id="sims"></div>
+    <div class="card" style="margin-top: 20px;">
+      <button class="btn btn-primary" id="submitStage2Btn" onclick="submitStage2()" style="margin-right: 10px;">Отправить ответы</button>
+      <a class="btn btn-secondary" href="menu.html?team=0&token=0" id="backLink" style="margin-left: 10px;">← В меню туров</a>
+    </div>
+    <div id="ticketBox"></div>
+  </section>
 
-  <h2 class="stage-title">Этап 2. Найди ошибку</h2>
-  <div id="stories"></div>
-
-  <div class="card" style="margin-top:20px;">
-    <button class="btn btn-primary" id="submitBtn2" onclick="submitAll()" style="margin-right:10px;">Отправить все ответы</button>
-    <a class="btn btn-secondary" href="menu.html?team=0&token=0" id="backLink">← В меню туров</a>
-  </div>
-
-  <div id="ticketBox"></div>
 </main>
 
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
+  /* ============================================================
+     ПАРАМЕТРЫ
+     ============================================================ */
   var params = new URLSearchParams(location.search);
   var teamId = params.get('team');
   var token  = params.get('token');
@@ -127,258 +296,591 @@
   }
   document.getElementById('who').textContent = teamName;
 
-  // ============ СЦЕНАРИИ ============
-  var scenarios = [
+  /* ============================================================
+     УРОВНИ И КООРДИНАТЫ
+     ============================================================ */
+  var LEVELS = [
     {
-      id: 1,
-      title: 'Бесхозная сумка в вузе',
-      situation: 'Ты в коридоре корпуса заметил сумку без хозяина. Она стоит у входа в аудиторию, где через 10 минут начнётся лекция. Вокруг студенты, никто не обращает внимания.',
-      correct: [
-        'Не подходить, не трогать, не открывать',
-        'Отойти на безопасное расстояние и предупредить рядом стоящих',
-        'Сообщить охране, администрации или по номеру 112',
-        'Дождаться прибытия специалистов, не создавая паники',
-        'Если попросят — рассказать, кто и когда мог оставить сумку'
-      ]
+      id: 'find-1',
+      title: 'Уровень 1. Холл университета',
+      img: 'img/find-1.jpg',
+      hotspots: [
+        { x: 39.4, y: 85.9 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
-      id: 2,
-      title: 'Незнакомец в мессенджере',
-      situation: 'Тебе в Telegram пишет незнакомый человек: «Привет! Есть несложная работа, оплата 20 000 ₽. Нужно передать посылку. Никому не говори. Ответь до вечера».',
-      correct: [
-        'Не отвечать и не соглашаться',
-        'Сделать скриншоты переписки и сохранить их',
-        'Заблокировать аккаунт отправителя',
-        'Рассказать родителям, преподавателю или куратору',
-        'При реальных угрозах — обратиться в полицию'
-      ]
+      id: 'find-2',
+      title: 'Уровень 2. Аудитория',
+      img: 'img/find-2.jpg',
+      hotspots: [
+        { x: 49.2, y: 67.1 },
+        { x: 48.5, y: 86.1 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
-      id: 3,
-      title: 'Друг согласился на «странную подработку»',
-      situation: 'Твой друг рассказал, что нашёл подработку: нужно «просто передать коробку» за 15 000 ₽. Работодатель попросил никому не говорить и не интересоваться, что внутри.',
-      correct: [
-        'Спокойно объяснить другу, что это опасная схема',
-        'Рассказать, чем это может закончиться (вплоть до уголовной ответственности)',
-        'Предложить вместе поговорить со взрослыми или куратором',
-        'Убедить его не соглашаться и не идти на встречу',
-        'При необходимости — обратиться в полицию вместе'
-      ]
+      id: 'find-3',
+      title: 'Уровень 3. Кофейня',
+      img: 'img/find-3.png',
+      hotspots: [
+        { x: 48.6, y: 84.9 },
+        { x: 60.1, y: 89.9 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
-      id: 4,
-      title: 'Угрозы в соцсетях',
-      situation: 'Тебе в личные сообщения пишет незнакомый аккаунт: «Мы знаем, где ты живёшь. Тебе лучше молчать». Ты не понимаешь, чем это вызвано.',
-      correct: [
-        'Не отвечать и не вступать в переписку',
-        'Сделать скриншоты: переписка, ник, аватар, дата и время',
-        'Заблокировать аккаунт',
-        'Рассказать родителям или преподавателю, если несовершеннолетний',
-        'Обратиться в полицию, если угрозы реальные или повторяются'
-      ]
+      id: 'find-4',
+      title: 'Уровень 4. Вход в вуз',
+      img: 'img/find-4.jpg',
+      hotspots: [
+        { x: 70.7, y: 87.5 },
+        { x: 80.9, y: 55.4 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     },
     {
-      id: 5,
-      title: 'Призыв к насилию в сети',
-      situation: 'В комментариях под постом ты увидел: «Пора действовать! Идём и разбираемся с ними. Кто с нами — пиши в личку». Текст адресован группе людей по национальному признаку.',
-      correct: [
-        'Не отвечать и не вступать в переписку',
-        'Сохранить ссылку и скриншот поста',
-        'Отправить жалобу администрации соцсети',
-        'Сообщить в полицию или на горячую линию',
-        'Предупредить близких, чтобы не втягивались'
-      ]
+      id: 'find-5',
+      title: 'Уровень 5. Вокзал',
+      img: 'img/find-5.jpg',
+      hotspots: [
+        { x: 75.6, y: 89.9 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
+    },
+    {
+      id: 'find-6',
+      title: 'Уровень 6. Кабинет права',
+      img: 'img/find-6.png',
+      hotspots: [
+        { x: 61.1, y: 64.3 },
+        { x: 73.5, y: 49 }
+      ],
+      algorithm: ['stop', 'leave', 'warn', 'call']
     }
   ];
 
-  var STORIES = [
-    {
-      id: 1,
-      title: 'История 1. «Я просто переслал друзьям»',
-      story: 'Студент увидел в соцсети пост с призывом к насилию против людей другой национальности. Ему показалось это «дичью», и он переслал пост в общий чат группы с подписью: «Смотрите, что творят». Через неделю его вызвали в деканат — пост разошёлся по университету, и его автора искали.',
-      hint: 'Он распространил запрещённый контент, даже из «благих» побуждений. Пересылка — это тоже распространение.'
-    },
-    {
-      id: 2,
-      title: 'История 2. «Я решил разобраться сам»',
-      story: 'Студентке в соцсетях начал писать незнакомец с угрозами. Она ответила ему резко: «Ты кто такой? Приходи, поговорим». Он прислал ей фото её дома и сказал, что «зайдёт вечером». Девушка испугалась, но никому не рассказала — думала, что «справится сама».',
-      hint: 'Она вступила в переписку, не сохранила доказательства заранее, не рассказала взрослым. При реальных угрозах нужно сразу сообщать.'
-    },
-    {
-      id: 3,
-      title: 'История 3. «Я не знал, что внутри»',
-      story: 'Студент согласился на «лёгкую подработку»: за 5000 ₽ отвезти коробку по адресу. Работодатель сказал: «Не открывай, просто передай». В коробке был запрещённый предмет. Студента задержали, и он объяснял, что «просто выполнял задание и не знал».',
-      hint: 'Он согласился передавать закрытую коробку от незнакомца. Это классическая схема вовлечения. Нельзя брать на себя ответственность за то, что не проверено.'
-    }
-  ];
+  /* ============================================================
+     АЛГОРИТМ — плитки
+     ============================================================ */
+  var TILES = {
+    stop:  { text: 'Не трогать, не подходить',   icon: 'img/icon-stop.png' },
+    leave: { text: 'Отойти на безопасное расстояние', icon: 'img/icon-leave.png' },
+    warn:  { text: 'Сообщить охране / администрации', icon: 'img/icon-warn.png' },
+    call:  { text: 'Позвонить в полицию (112)',  icon: 'img/icon-call.png' }
+  };
 
-  // Хранилище состояния: для каждого сценария — массив шагов в порядке команды
-  var state = {};
+  /* ============================================================
+     СОСТОЯНИЕ ИГРЫ
+     ============================================================ */
+  var state = {
+    levelIdx: 0,
+    score: 0,
+    totalFound: 0,
+    algorithmsCorrect: 0,
+    totalMisses: 0,
+    startTime: 0,
+    levelStartTime: 0,
+    soundOn: true
+  };
 
-  function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
+  /* ============================================================
+     ЗВУК (WebAudio)
+     ============================================================ */
+  var audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) {}
     }
-    return a;
+  }
+  function playTone(freq, duration, type, vol) {
+    if (!state.soundOn || !audioCtx) return;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  }
+  function soundTap()    { playTone(600, 0.05, 'square', 0.08); }
+  function soundFound()  { playTone(880, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(1320, 0.2, 'sine', 0.2); }, 100); }
+  function soundMiss()   { playTone(180, 0.15, 'sawtooth', 0.12); }
+  function soundLock()   { playTone(1000, 0.08, 'triangle', 0.15); }
+  function soundWin()    { playTone(660, 0.15, 'sine', 0.2); setTimeout(function(){ playTone(880, 0.15, 'sine', 0.2); }, 150); setTimeout(function(){ playTone(1320, 0.3, 'sine', 0.2); }, 300); }
+
+  function toggleSound() {
+    state.soundOn = !state.soundOn;
+    document.getElementById('soundBtn').textContent = state.soundOn ? '🔊' : '🔇';
   }
 
-  function renderScenarios() {
-    var box = document.getElementById('scenarios');
-    box.innerHTML = '';
+  /* ============================================================
+     СТАРТ ИГРЫ
+     ============================================================ */
+  function startGame() {
+    initAudio();
+    state.startTime = Date.now();
+    document.getElementById('introScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.remove('hidden');
+    loadLevel(0);
+  }
 
-    scenarios.forEach(function(sc) {
-      // Перемешиваем шаги, если ещё не в state
-      if (!state[sc.id]) state[sc.id] = shuffle(sc.correct);
+  var timerInterval = null;
+  var timeLeftSec = 60;
 
-      var html = '<div class="scenario" data-scenario="' + sc.id + '">' +
-        '<h3>Сценарий ' + sc.id + '. ' + sc.title + '</h3>' +
-        '<div class="situation">' + sc.situation + '</div>' +
-        '<p style="font-size:13px; color:var(--muted);">Расставьте шаги в правильном порядке. Что сначала, что потом.</p>' +
-        '<ul class="step-list" id="steps_' + sc.id + '"></ul>' +
-        '</div>';
-      box.insertAdjacentHTML('beforeend', html);
-      renderSteps(sc.id);
+  function loadLevel(idx) {
+    state.levelIdx = idx;
+    state.levelStartTime = Date.now();
+    timeLeftSec = 60;
+
+    var lvl = LEVELS[idx];
+    document.getElementById('levelTitle').textContent = lvl.title;
+    document.getElementById('levelIndicator').textContent = 'Уровень ' + (idx + 1) + ' / ' + LEVELS.length;
+    document.getElementById('progressBar').style.width = ((idx) / LEVELS.length * 100) + '%';
+
+    document.getElementById('sceneImg').src = lvl.img;
+
+    // Сбросить счётчики
+    document.getElementById('foundCount').textContent = '0 / ' + lvl.hotspots.length;
+    document.getElementById('missCount').innerHTML = 'Промахов: <b>0</b>';
+    document.getElementById('afterFind').classList.add('hidden');
+
+    // Очистить старые хотспоты
+    var wrap = document.getElementById('sceneWrap');
+    wrap.querySelectorAll('.hotspot, .tap-ripple, .tap-miss').forEach(function(el) { el.remove(); });
+
+    // Добавить хотспоты
+    lvl.hotspots.forEach(function(h, i) {
+      var el = document.createElement('div');
+      el.className = 'hotspot';
+      el.style.left = h.x + '%';
+      el.style.top = h.y + '%';
+      el.dataset.idx = i;
+      el.dataset.found = '0';
+      wrap.appendChild(el);
     });
+
+    // Обработчик тапа на картинку (для промахов)
+    wrap.onclick = function(e) {
+      if (e.target.classList.contains('hotspot')) return;
+      handleMiss(e);
+    };
+
+    // Обработчики на хотспоты
+    wrap.querySelectorAll('.hotspot').forEach(function(h) {
+      h.onclick = function(e) {
+        e.stopPropagation();
+        handleHit(h, e);
+      };
+    });
+
+    startTimer();
   }
 
-  function renderSteps(scenarioId) {
-    var list = document.getElementById('steps_' + scenarioId);
-    if (!list) return;
-    var steps = state[scenarioId];
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    updateTimerDisplay();
+    timerInterval = setInterval(function() {
+      if (timeLeftSec > 0) {
+        timeLeftSec--;
+        updateTimerDisplay();
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    var m = Math.floor(timeLeftSec / 60);
+    var s = timeLeftSec % 60;
+    var el = document.getElementById('timerDisplay');
+    el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    if (timeLeftSec <= 10) el.style.color = '#c62828';
+    else el.style.color = '';
+  }
+
+  function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+  function handleHit(el, e) {
+    if (el.dataset.found === '1') return;
+    el.dataset.found = '1';
+    el.classList.add('found');
+    soundFound();
+
+    // Вибрация
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    // Обновить счётчики
+    var lvl = LEVELS[state.levelIdx];
+    var foundNow = document.querySelectorAll('.hotspot.found').length;
+    document.getElementById('foundCount').textContent = foundNow + ' / ' + lvl.hotspots.length;
+
+    // Показать риппл
+    var rect = document.getElementById('sceneWrap').getBoundingClientRect();
+    var rip = document.createElement('div');
+    rip.className = 'tap-ripple';
+    rip.style.left = ((e.clientX - rect.left) / rect.width * 100) + '%';
+    rip.style.top = ((e.clientY - rect.top) / rect.height * 100) + '%';
+    document.getElementById('sceneWrap').appendChild(rip);
+    setTimeout(function() { rip.remove(); }, 700);
+
+    // Все найдены — открыть модалку
+    if (foundNow === lvl.hotspots.length) {
+      stopTimer();
+      setTimeout(function() {
+        document.getElementById('afterFind').classList.remove('hidden');
+      }, 400);
+    }
+  }
+
+  function handleMiss(e) {
+    state.totalMisses++;
+    soundMiss();
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    var miss = document.querySelector('.hotspot.found');
+    document.getElementById('missCount').innerHTML = 'Промахов: <b>' + state.totalMisses + '</b>';
+
+    var wrap = document.getElementById('sceneWrap');
+    var rect = wrap.getBoundingClientRect();
+    var x = ((e.clientX - rect.left) / rect.width * 100);
+    var y = ((e.clientY - rect.top) / rect.height * 100);
+
+    var mark = document.createElement('div');
+    mark.className = 'tap-miss';
+    mark.textContent = '✕';
+    mark.style.left = x + '%';
+    mark.style.top = y + '%';
+    wrap.appendChild(mark);
+    setTimeout(function() { mark.remove(); }, 1000);
+  }
+
+  /* ============================================================
+     МОДАЛКА АЛГОРИТМА
+     ============================================================ */
+  var sortableInstance = null;
+
+  function openAlgorithmModal() {
+    var lvl = LEVELS[state.levelIdx];
+    var order = lvl.algorithm.slice();
+
+    // Перемешать для игрока
+    var shuffled = order.slice().sort(function() { return Math.random() - 0.5; });
+
+    var list = document.getElementById('sortableList');
     list.innerHTML = '';
-
-    steps.forEach(function(step, idx) {
+    shuffled.forEach(function(key) {
+      var tile = TILES[key];
       var li = document.createElement('li');
-      li.className = 'step-item';
-      li.draggable = true;
-      li.dataset.idx = idx;
+      li.className = 'sortable-item';
+      li.dataset.key = key;
       li.innerHTML =
-        '<span class="drag-handle">☰</span>' +
-        '<span class="step-text">' + (idx + 1) + '. ' + step + '</span>' +
-        '<span class="arrows">' +
-          '<button ' + (idx === 0 ? 'disabled' : '') + ' onclick="moveStep(' + scenarioId + ',' + idx + ',-1)">↑</button>' +
-          '<button ' + (idx === steps.length - 1 ? 'disabled' : '') + ' onclick="moveStep(' + scenarioId + ',' + idx + ',1)">↓</button>' +
-        '</span>';
-
-      // Drag-n-drop (работает на ПК)
-      li.addEventListener('dragstart', function(e) {
-        li.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', idx);
-      });
-      li.addEventListener('dragend', function() { li.classList.remove('dragging'); });
-      li.addEventListener('dragover', function(e) { e.preventDefault(); });
-      li.addEventListener('drop', function(e) {
-        e.preventDefault();
-        var fromIdx = Number(e.dataTransfer.getData('text/plain'));
-        var toIdx = idx;
-        if (fromIdx === toIdx) return;
-        var arr = state[scenarioId];
-        var moved = arr.splice(fromIdx, 1)[0];
-        arr.splice(toIdx, 0, moved);
-        renderSteps(scenarioId);
-      });
-
+        '<span class="sortable-handle">☰</span>' +
+        '<img src="' + tile.icon + '" alt="">' +
+        '<span class="text">' + tile.text + '</span>' +
+        '<span class="check">✓</span>';
       list.appendChild(li);
     });
 
-    updateProgress();
-  }
-
-  function moveStep(scenarioId, idx, direction) {
-    var arr = state[scenarioId];
-    var newIdx = idx + direction;
-    if (newIdx < 0 || newIdx >= arr.length) return;
-    var t = arr[idx]; arr[idx] = arr[newIdx]; arr[newIdx] = t;
-    renderSteps(scenarioId);
-  }
-
-  function updateProgress() {
-    var done = 0;
-    scenarios.forEach(function(sc) {
-      var current = state[sc.id] || [];
-      var correct = sc.correct;
-      var same = current.length === correct.length && current.every(function(v, i) { return v === correct[i]; });
-      if (same) done++;
-    });
-    document.getElementById('progressText').textContent = 'Правильно расставлено: ' + done + ' / ' + scenarios.length;
-  }
-
-  // ============ ИСТОРИИ ============
-  function renderStories() {
-    var box = document.getElementById('stories');
-    box.innerHTML = '';
-    STORIES.forEach(function(st) {
-      var html = '<div class="story">' +
-        '<h3>' + st.title + '</h3>' +
-        '<div class="story-text">' + st.story + '</div>' +
-        '<label for="answer_' + st.id + '"><b>Что здесь не так? Как было бы правильно?</b></label>' +
-        '<textarea id="answer_' + st.id + '" placeholder="Напишите развёрнутый ответ команды..."></textarea>' +
-        '</div>';
-      box.insertAdjacentHTML('beforeend', html);
-    });
-  }
-
-  // ============ ОТПРАВКА ============
-  function submitAll() {
-    // Этап 1: считаем правильные порядки
-    var correctCount = 0;
-    var scenarioResults = {};
-    scenarios.forEach(function(sc) {
-      var current = state[sc.id] || [];
-      var correct = sc.correct;
-      var same = current.length === correct.length && current.every(function(v, i) { return v === correct[i]; });
-      if (same) correctCount++;
-      scenarioResults[sc.id] = { userOrder: current, correct: same };
+    // SortableJS
+    if (sortableInstance) sortableInstance.destroy();
+    sortableInstance = new Sortable(list, {
+      animation: 200,
+      handle: '.sortable-handle',
+      ghostClass: 'dragging',
+      onEnd: function() {
+        soundTap();
+        checkLockedItems();
+      }
     });
 
-    // Этап 2: собираем ответы
-    var storyAnswers = {};
-    var anyFilled = false;
-    STORIES.forEach(function(st) {
-      var el = document.getElementById('answer_' + st.id);
-      var val = el ? el.value.trim() : '';
-      storyAnswers[st.id] = val;
-      if (val.length > 0) anyFilled = true;
+    document.getElementById('checkBtn').disabled = true;
+    document.getElementById('algorithmResult').textContent = '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function checkLockedItems() {
+    var lvl = LEVELS[state.levelIdx];
+    var items = Array.from(document.querySelectorAll('#sortableList .sortable-item'));
+    var allLocked = true;
+    var anyLocked = false;
+
+    items.forEach(function(item, i) {
+      var expected = lvl.algorithm[i];
+      if (item.dataset.key === expected) {
+        item.classList.add('locked');
+        item.setAttribute('draggable', 'false');
+        item.querySelector('.sortable-handle').style.visibility = 'hidden';
+        if (!item.dataset.wasLocked) {
+          soundLock();
+          item.dataset.wasLocked = '1';
+        }
+        anyLocked = true;
+      } else {
+        item.classList.remove('locked');
+        item.setAttribute('draggable', 'true');
+        item.querySelector('.sortable-handle').style.visibility = '';
+        item.dataset.wasLocked = '';
+        allLocked = false;
+      }
     });
 
-    if (!anyFilled) {
-      if (!confirm('Вы не ответили ни на одну историю этапа 2. Всё равно отправить?')) return;
+    document.getElementById('checkBtn').disabled = !allLocked;
+    if (allLocked) {
+      document.getElementById('algorithmResult').textContent = '✓ Порядок верный! Нажми «Проверить».';
+      document.getElementById('algorithmResult').style.color = '#2e7d32';
     }
+  }
 
-    var totalPoints = correctCount * 2; // максимум 10 за этап 1
+  function checkAlgorithm() {
+    // Все на месте — начисляем баллы
+    var lvl = LEVELS[state.levelIdx];
+    var basePoints = lvl.hotspots.length; // 1 балл за каждый найденный объект
+    var algoPoints = 3;                    // 3 балла за алгоритм
+    var speedBonus = timeLeftSec >= 30 ? 1 : 0;
 
+    state.score += basePoints + algoPoints + speedBonus;
+    state.totalFound += lvl.hotspots.length;
+    state.algorithmsCorrect++;
+
+    document.getElementById('scoreIndicator').textContent = state.score;
+    document.getElementById('progressBar').style.width = ((state.levelIdx + 1) / LEVELS.length * 100) + '%';
+
+    closeModal();
+    soundWin();
+
+    // Следующий уровень или финал
+    if (state.levelIdx + 1 < LEVELS.length) {
+      setTimeout(function() {
+        loadLevel(state.levelIdx + 1);
+      }, 700);
+    } else {
+      setTimeout(showFinal, 700);
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  /* ============================================================
+     ФИНАЛЬНЫЙ ЭКРАН
+     ============================================================ */
+  function showFinal() {
+    stopTimer();
+    document.getElementById('gameScreen').classList.add('hidden');
+    document.getElementById('finalScreen').classList.remove('hidden');
+
+    var duration = Math.round((Date.now() - state.startTime) / 1000);
+    var mins = Math.floor(duration / 60);
+    var secs = duration % 60;
+
+    var totalObjects = LEVELS.reduce(function(a, l) { return a + l.hotspots.length; }, 0);
+
+    document.getElementById('statFound').textContent = state.totalFound + ' / ' + totalObjects;
+    document.getElementById('statAlgorithms').textContent = state.algorithmsCorrect + ' / ' + LEVELS.length;
+    document.getElementById('statScore').textContent = state.score;
+    document.getElementById('statTime').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+    // Медаль
+    var medal = '🥉';
+    var title = 'Хорошо!';
+    if (state.totalMisses === 0 && state.algorithmsCorrect === LEVELS.length) {
+      medal = '🥇'; title = 'Идеально! Ни одного промаха';
+    } else if (state.algorithmsCorrect >= LEVELS.length - 1 && state.totalMisses <= 3) {
+      medal = '🥈'; title = 'Отличный результат';
+    }
+    document.getElementById('medalIcon').textContent = medal;
+    document.getElementById('finalTitle').textContent = title;
+    document.getElementById('finalSub').textContent = 'Промахов: ' + state.totalMisses;
+
+    // Сохранить результат тура
     var result = {
       teamId: teamId, teamName: teamName, tour: 4,
-      scenarios: scenarioResults,
-      stories: storyAnswers,
-      stage1Points: totalPoints,
-      stage1Max: scenarios.length * 2,
+      stage1: {
+        score: state.score,
+        totalFound: state.totalFound,
+        algorithmsCorrect: state.algorithmsCorrect,
+        totalMisses: state.totalMisses,
+        duration: duration
+      },
       time: new Date().toISOString()
     };
-    localStorage.setItem('result4_team_' + teamId, JSON.stringify(result));
+    // Сохраним промежуточно
+    var existing = {};
+    try { existing = JSON.parse(localStorage.getItem('result4_team_' + teamId) || '{}'); } catch (e) {}
+    existing.stage1 = result.stage1;
+    existing.teamName = teamName;
+    existing.tour = 4;
+    existing.time = new Date().toISOString();
+    localStorage.setItem('result4_team_' + teamId, JSON.stringify(existing));
+  }
+
+  /* ============================================================
+     ЭТАП 2. СИМУЛЯТОР (компактная версия)
+     ============================================================ */
+  function goToStage2() {
+    document.getElementById('finalScreen').classList.add('hidden');
+    document.getElementById('stage2Screen').classList.remove('hidden');
+    renderSims();
+  }
+
+  var SIMULATIONS = [
+    {
+      id: 'tg',
+      title: 'Ситуация 1. Странное сообщение',
+      startScene: 's1',
+      scenes: {
+        s1: {
+          text: 'Незнакомый аккаунт в Telegram: «Привет! Есть дело на 30 000 ₽/мес. Несложно. Никому не говори. Ответь до вечера».',
+          choices: [
+            { text: 'Ответить: «Интересно, расскажи»', next: 'end_bad', score: 0, feedback: 'Вступать в диалог нельзя — это сигнал, что ты готов слушать.' },
+            { text: 'Ничего не отвечать, сделать скриншот', next: 's2_good', score: 1, feedback: 'Правильно: не вступать в диалог, сразу фиксировать.' },
+            { text: 'Удалить сообщение и забыть', next: 'end_meh', score: 0, feedback: 'Удалять нельзя — теряются доказательства.' }
+          ]
+        },
+        s2_good: {
+          text: 'Скриншот сохранён. Что дальше?',
+          choices: [
+            { text: 'Заблокировать и рассказать взрослым', next: 'end_good', score: 1, feedback: 'Правильно: зафиксировал — блокируй и расскажи.' },
+            { text: 'Подождать, может напишет ещё', next: 'end_meh', score: 0, feedback: 'Не жди продолжения. Сохранил — блокируй.' }
+          ]
+        },
+        end_good: { text: 'Ты действовал правильно.', choices: [], final: true, score: 1 },
+        end_meh: { text: 'В целом верно, но можно было решительнее.', choices: [], final: true, score: 0 },
+        end_bad: { text: 'Ситуация зашла слишком далеко — так делать нельзя.', choices: [], final: true, score: 0 }
+      }
+    },
+    {
+      id: 'bag',
+      title: 'Ситуация 2. Бесхозная сумка',
+      startScene: 'b1',
+      scenes: {
+        b1: {
+          text: 'В холле корпуса одинокая сумка у стены, рядом никого.',
+          choices: [
+            { text: 'Открыть и посмотреть', next: 'end_bad', score: 0, feedback: 'Нельзя открывать бесхозные предметы.' },
+            { text: 'Отойти, предупредить, сообщить охране', next: 'b2_good', score: 1, feedback: 'Правильно — стандартный алгоритм.' },
+            { text: 'Снять на видео и выложить', next: 'end_meh', score: 0, feedback: 'Лишнее. Главное — безопасность.' }
+          ]
+        },
+        b2_good: {
+          text: 'Охрана просит остаться до приезда полиции. Твои действия?',
+          choices: [
+            { text: 'Остаться и ответить на вопросы', next: 'end_good', score: 1, feedback: 'Правильно. Ты свидетель — информация важна.' },
+            { text: 'Уйти на пару, я же не виноват', next: 'end_meh', score: 0, feedback: 'Не стоит уходить без разрешения.' }
+          ]
+        },
+        end_good: { text: 'Ты действовал по алгоритму.', choices: [], final: true, score: 1 },
+        end_meh: { text: 'Справился, но были ошибки.', choices: [], final: true, score: 0 },
+        end_bad: { text: 'Ситуация закончилась плохо.', choices: [], final: true, score: 0 }
+      }
+    }
+  ];
+
+  var simState = {};
+
+  function renderSims() {
+    var box = document.getElementById('sims');
+    box.innerHTML = '';
+    SIMULATIONS.forEach(function(sim) {
+      if (!simState[sim.id]) simState[sim.id] = { currentScene: sim.startScene, score: 0, history: [] };
+      var c = document.createElement('div');
+      c.className = 'sim-container';
+      c.id = 'sim_' + sim.id;
+      box.appendChild(c);
+      renderSimScene(sim);
+    });
+  }
+
+  function renderSimScene(sim) {
+    var st = simState[sim.id];
+    var scene = sim.scenes[st.currentScene];
+    var el = document.getElementById('sim_' + sim.id);
+    if (!el) return;
+
+    var header = '<div class="sim-header"><h3>' + sim.title + '</h3>' +
+      '<span class="sim-progress">Правильных: ' + st.score + '</span></div>';
+
+    var body = '';
+    if (scene.final) {
+      var ok = scene.score === 1;
+      body += '<div class="sim-result"><h4>' + (ok ? '✓ Хорошо' : '⚠ Разбор') + '</h4>' +
+        '<p>' + scene.text + '</p>' +
+        '<p><b>Правильных решений: ' + st.score + '</b></p></div>';
+    } else {
+      body += '<div class="sim-text">' + scene.text + '</div>';
+      scene.choices.forEach(function(c, i) {
+        body += '<button class="sim-choice" id="choice_' + sim.id + '_' + i + '" onclick="simChoose(\'' + sim.id + '\',' + i + ')">' + c.text + '</button>';
+      });
+      body += '<div id="sim_fb_' + sim.id + '"></div>';
+    }
+
+    el.innerHTML = header + body;
+  }
+
+  function simChoose(simId, idx) {
+    var sim = SIMULATIONS.find(function(s) { return s.id === simId; });
+    var st = simState[simId];
+    var scene = sim.scenes[st.currentScene];
+    var choice = scene.choices[idx];
+
+    st.history.push({ choice: choice.text, score: choice.score });
+    st.score += choice.score;
+
+    scene.choices.forEach(function(c, i) {
+      var btn = document.getElementById('choice_' + simId + '_' + i);
+      if (btn) {
+        btn.disabled = true;
+        if (i === idx) btn.classList.add(choice.score === 1 ? 'correct' : 'wrong');
+      }
+    });
+
+    var fb = document.getElementById('sim_fb_' + simId);
+    fb.innerHTML = '<div class="sim-feedback ' + (choice.score === 1 ? 'ok' : 'err') + '">' +
+      (choice.score === 1 ? '✓ ' : '✗ ') + choice.feedback + '</div>' +
+      '<p style="margin-top:12px;"><button class="btn btn-primary" onclick="simNext(\'' + simId + '\',\'' + choice.next + '\')">Далее →</button></p>';
+  }
+
+  function simNext(simId, nextScene) {
+    simState[simId].currentScene = nextScene;
+    var sim = SIMULATIONS.find(function(s) { return s.id === simId; });
+    renderSimScene(sim);
+  }
+
+  function submitStage2() {
+    var stage2 = {};
+    var totalScore = 0;
+    SIMULATIONS.forEach(function(sim) {
+      var st = simState[sim.id];
+      var scene = sim.scenes[st.currentScene];
+      stage2[sim.id] = { score: st.score, finished: scene && scene.final, history: st.history };
+      totalScore += st.score;
+    });
+
+    var existing = {};
+    try { existing = JSON.parse(localStorage.getItem('result4_team_' + teamId) || '{}'); } catch (e) {}
+    existing.stage2 = stage2;
+    existing.stage2Score = totalScore;
+    existing.teamName = teamName;
+    existing.tour = 4;
+    existing.time = new Date().toISOString();
+    localStorage.setItem('result4_team_' + teamId, JSON.stringify(existing));
 
     document.getElementById('ticketBox').innerHTML =
       '<div class="ticket" style="margin-top:20px;">' +
-        '<h3>Тур 4 — результаты</h3>' +
+        '<h3>Тур 4 завершён</h3>' +
         '<p><b>Команда:</b> ' + teamName + '</p>' +
-        '<p><b>Этап 1 (алгоритмы):</b> <span class="big">' + totalPoints + ' / ' + (scenarios.length * 2) + '</span></p>' +
-        '<p><b>Этап 2 (истории):</b> отправлено на проверку жюри</p>' +
-        '<p style="color:#666; font-size:13px;">Жюри оценит этап 2 и внесёт баллы в общую таблицу.</p>' +
+        '<p><b>Этап 1 (игра):</b> ' + state.score + ' очков</p>' +
+        '<p><b>Этап 2 (симулятор):</b> ' + totalScore + ' правильных решений</p>' +
         '<p style="margin-top:16px;"><a class="btn btn-primary" href="menu.html?team=' + teamId + '&token=' + token + '">← Вернуться в меню туров</a></p>' +
       '</div>';
 
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('submitBtn2').disabled = true;
-    document.getElementById('submitBtn').textContent = 'Отправлено';
-    document.getElementById('submitBtn2').textContent = 'Отправлено';
+    document.getElementById('submitStage2Btn').disabled = true;
+    document.getElementById('submitStage2Btn').textContent = 'Отправлено';
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
-  renderScenarios();
-  renderStories();
-  updateProgress();
 </script>
 
 </body>
