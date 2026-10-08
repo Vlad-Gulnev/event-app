@@ -11,7 +11,6 @@
     .login-wrap p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
     .login-wrap input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius); box-sizing: border-box; margin-bottom: 12px; }
     .login-err { color: var(--err); font-size: 14px; margin-top: 10px; }
-
     .copy-btn { padding: 4px 10px; font-size: 13px; background: #eef1f5; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: inherit; }
     .copy-btn:hover { background: #e2e7ee; }
     .case-answer { background: #f7f9fc; border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 6px; margin: 8px 0; white-space: pre-wrap; font-size: 15px; }
@@ -20,13 +19,11 @@
     .score-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
     .score-row input { width: 60px; margin: 0; padding: 6px; }
     .criteria-list { font-size: 13px; color: var(--muted); margin: 6px 0 12px; }
-
     .tab-bar { display: flex; gap: 6px; margin: 12px 0 16px; flex-wrap: wrap; }
     .tab-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-family: inherit; font-size: 14px; }
     .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
-
     .work-preview { background: #f7f9fc; padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; margin-bottom: 14px; }
     .work-preview img { max-width: 100%; max-height: 500px; border-radius: 8px; }
     .work-preview video { max-width: 100%; max-height: 500px; border-radius: 8px; }
@@ -37,13 +34,11 @@
     .work-meta { font-size: 13px; color: var(--muted); }
     .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .score-live { font-size: 15px; font-weight: 700; color: var(--primary-dark); }
-
     .tour4-block { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 12px 0; background: #fff; }
     .tour4-block h4 { margin: 0 0 10px; color: var(--primary-dark); font-size: 16px; }
     .stat-line { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
     .stat-line:last-child { border-bottom: none; }
     .stat-line b { color: var(--primary-dark); }
-    .story-hint { font-size: 13px; background: #fff8e1; border-left: 4px solid #d4a017; padding: 10px 14px; border-radius: 6px; margin: 8px 0; color: #664d03; }
   </style>
 </head>
 <body>
@@ -136,8 +131,8 @@
     <div class="card">
       <h2>Тур 4. Найди опасность</h2>
       <p style="color: var(--muted); font-size: 14px;">
-        Этап 1 — игра: очки за найденные объекты, собранные алгоритмы и бонус за скорость (макс. ~40).<br>
-        Этап 2 — симулятор: 3 ситуации, по 1 баллу за правильное решение (макс. 6).<br>
+        Этап 1 — игра: очки за найденные объекты, собранные алгоритмы и бонус за скорость.<br>
+        Этап 2 — симулятор: 3 ситуации, по 1 баллу за правильное решение.<br>
         <b>Общий максимум за Тур 4 — 46 баллов.</b>
       </p>
       <label for="tour4Select"><b>Команда:</b></label>
@@ -168,458 +163,445 @@
 </div>
 
 <script>
-  // ==== ЛОГИН ====
-  var SALT = 'yargu-centre-2026-';
-  function simpleHash(str) {
-    var h = 5381;
-    for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & h; }
-    return (h >>> 0).toString(16);
-  }
-  var PASS_HASH = simpleHash(SALT + 'KBU3');
+/* ===== КОНСТАНТЫ ===== */
+var CASES_META = { 1:'Переписка в мессенджере', 2:'Пост в соцсети', 3:'Подозрительный предмет', 4:'Лёгкий заработок' };
+var SIM_TITLES = { tg: 'Ситуация 1. Странное сообщение', bag: 'Ситуация 2. Бесхозная сумка', friend: 'Ситуация 3. Друг втягивается' };
 
-  function tryLogin() {
-    var input = document.getElementById('passInput').value;
-    if (simpleHash(SALT + input) === PASS_HASH) {
-      sessionStorage.setItem('admin_ok', '1');
-      showAdmin();
+/* ===== ЛОГИН ===== */
+var SALT = 'yargu-centre-2026-';
+function simpleHash(str) {
+  var h = 5381;
+  for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & h; }
+  return (h >>> 0).toString(16);
+}
+var PASS_HASH = simpleHash(SALT + 'KBU3');
+
+function tryLogin() {
+  var input = document.getElementById('passInput').value;
+  if (simpleHash(SALT + input) === PASS_HASH) {
+    sessionStorage.setItem('admin_ok', '1');
+    showAdmin();
+  } else {
+    document.getElementById('loginErr').textContent = 'Неверный пароль';
+  }
+}
+function logout() { sessionStorage.removeItem('admin_ok'); location.reload(); }
+function showAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = '';
+  load();
+  setInterval(load, 5000);
+}
+if (sessionStorage.getItem('admin_ok') === '1') { showAdmin(); }
+else { document.getElementById('passInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') tryLogin(); }); }
+
+/* ===== ОБЩЕЕ ===== */
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+function getTeams() {
+  try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
+  catch (e) { return []; }
+}
+function baseUrl() {
+  var loc = window.location;
+  return loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/');
+}
+function safeSum(str) {
+  if (!str) return 0;
+  return str.split(',').map(function(x) { return Number(x) || 0; }).reduce(function(a, b) { return a + b; }, 0);
+}
+
+/* ===== КОМАНДЫ ===== */
+function loadTeams() {
+  var teams = getTeams();
+  var tbody = document.querySelector('#teamsTbl tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="6">Пока нет команд.</td></tr>'; return; }
+  var base = baseUrl();
+  teams.forEach(function(t) {
+    var link = base + 'menu.html?token=' + t.token + '&team=' + t.id;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + t.id + '</td>' +
+      '<td><b>' + t.name + '</b></td>' +
+      '<td><code>' + t.token + '</code></td>' +
+      '<td style="font-size:13px;">' + (CASES_META[t.caseId] || '—') + '</td>' +
+      '<td><a href="' + link + '" target="_blank" style="font-size:13px; word-break:break-all;">' + link + '</a></td>' +
+      '<td><button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+function copyLink(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ alert('Скопировано'); }, function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea'); ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); alert('Скопировано'); } catch (e) { prompt('Скопируйте:', text); }
+  document.body.removeChild(ta);
+}
+
+/* ===== ТУР 1 КВИЗ ===== */
+function loadTour1Quiz() {
+  var teams = getTeams();
+  var tbody = document.querySelector('#tour1QuizTbl tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Нет команд.</td></tr>'; return; }
+  var rows = teams.map(function(t) {
+    var r = null;
+    try { r = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
+    return { name: t.name, score: r ? (r.correct || 0) : 0, time: r ? r.time : null, done: !!r };
+  });
+  rows.sort(function(a, b) { return b.score - a.score; });
+  rows.forEach(function(r, i) {
+    var tr = document.createElement('tr');
+    if (i === 0 && rows.length > 1 && r.score > 0) tr.className = 'leader';
+    tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
+      '<td>' + (r.done ? '<span class="badge ok">' + r.score + ' / 30</span>' : '<span class="badge">не прошёл</span>') + '</td>' +
+      '<td style="font-size:13px; color:#666;">' + (r.time ? new Date(r.time).toLocaleString('ru-RU') : '') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===== ТУР 1 КЕЙСЫ ===== */
+function loadCases() {
+  var teams = getTeams();
+  var box = document.getElementById('casesBox');
+  if (!box) return;
+  box.innerHTML = '';
+  if (teams.length === 0) { box.innerHTML = '<p>Нет команд.</p>'; return; }
+  teams.forEach(function(t) {
+    var caseData = null;
+    try { caseData = JSON.parse(localStorage.getItem('case_team_' + t.id) || 'null'); } catch (e) {}
+    var parts = (localStorage.getItem('case_score_' + t.id) || '0,0,0').split(',').map(function(x){ return Number(x) || 0; });
+    var html = '<div class="case-block">' +
+      '<h4>Команда: ' + t.name + '</h4>' +
+      '<p><b>Кейс:</b> ' + (caseData ? caseData.caseTitle : (CASES_META[t.caseId] || '—')) + '</p>';
+    if (caseData) {
+      html += '<p><b>Ответ:</b></p>' +
+        '<div class="case-answer">' + (caseData.answer || '(пусто)').replace(/</g, '&lt;') + '</div>' +
+        '<p style="color:var(--muted); font-size:13px;">Отправлено: ' + new Date(caseData.time).toLocaleString('ru-RU') + '</p>';
     } else {
-      document.getElementById('loginErr').textContent = 'Неверный пароль';
+      html += '<p style="color:var(--muted);">Команда ещё не отправила ответ.</p>';
     }
-  }
-  function logout() { sessionStorage.removeItem('admin_ok'); location.reload(); }
-  function showAdmin() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminApp').style.display = '';
-    load();
-    setInterval(load, 5000);
-  }
-  if (sessionStorage.getItem('admin_ok') === '1') { showAdmin(); }
-  else { document.getElementById('passInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') tryLogin(); }); }
+    html += '<p class="criteria-list"><b>Критерии:</b> 1) Замечена опасность 0–2; 2) Названы признаки 0–2; 3) Правильные действия 0–1</p>' +
+      '<div class="score-row">' +
+      '<label>Крит.1: <input type="number" min="0" max="2" id="c1_' + t.id + '" value="' + parts[0] + '"></label>' +
+      '<label>Крит.2: <input type="number" min="0" max="2" id="c2_' + t.id + '" value="' + parts[1] + '"></label>' +
+      '<label>Крит.3: <input type="number" min="0" max="1" id="c3_' + t.id + '" value="' + parts[2] + '"></label>' +
+      '<button class="btn btn-primary" onclick="saveScore(' + t.id + ')">Сохранить</button>' +
+      '<span id="saved_' + t.id + '" style="color:var(--ok); font-weight:600;"></span>' +
+      '</div></div>';
+    box.insertAdjacentHTML('beforeend', html);
+  });
+}
+function saveScore(teamId) {
+  var c1 = Math.max(0, Math.min(2, Number(document.getElementById('c1_' + teamId).value) || 0));
+  var c2 = Math.max(0, Math.min(2, Number(document.getElementById('c2_' + teamId).value) || 0));
+  var c3 = Math.max(0, Math.min(1, Number(document.getElementById('c3_' + teamId).value) || 0));
+  localStorage.setItem('case_score_' + teamId, c1 + ',' + c2 + ',' + c3);
+  var lbl = document.getElementById('saved_' + teamId);
+  if (lbl) { lbl.textContent = 'Сохранено: ' + (c1 + c2 + c3) + ' / 5'; setTimeout(function(){ lbl.textContent = ''; }, 3000); }
+  loadSummary();
+}
 
-  // ==== ОБЩЕЕ ====
-  var CASES_META = { 1:'Переписка в мессенджере', 2:'Пост в соцсети', 3:'Подозрительный предмет', 4:'Лёгкий заработок' };
+/* ===== ТУР 2 ===== */
+function loadTour2() {
+  var teams = getTeams();
+  var tbody = document.querySelector('#tour2Tbl tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Нет команд.</td></tr>'; return; }
+  var rows = teams.map(function(t) {
+    var r = null;
+    try { r = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
+    return { name: t.name, score: r ? (r.correct || 0) : 0, time: r ? r.time : null, done: !!r };
+  });
+  rows.sort(function(a, b) { return b.score - a.score; });
+  rows.forEach(function(r, i) {
+    var tr = document.createElement('tr');
+    if (i === 0 && rows.length > 1 && r.score > 0) tr.className = 'leader';
+    tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
+      '<td>' + (r.done ? '<span class="badge ok">' + r.score + ' / 8</span>' : '<span class="badge">не прошёл</span>') + '</td>' +
+      '<td style="font-size:13px; color:#666;">' + (r.time ? new Date(r.time).toLocaleString('ru-RU') : '') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
 
-  function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
-    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.getElementById(tabId).classList.add('active');
-    btn.classList.add('active');
-  }
-  function getTeams() { try { return JSON.parse(localStorage.getItem('teams') || '[]'); } catch (e) { return []; } }
-  function baseUrl() { var loc = window.location; return loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/'); }
+/* ===== ТУР 3 ===== */
+function fillTour3Select() {
+  var teams = getTeams();
+  var sel = document.getElementById('workSelect');
+  if (!sel) return;
+  var prev = sel.value;
+  sel.innerHTML = '';
+  if (teams.length === 0) { var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return; }
+  teams.forEach(function(t) {
+    var has = false;
+    try { has = !!JSON.parse(localStorage.getItem('result3_team_' + t.id) || 'null'); } catch (e) {}
+    var opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name + (has ? ' ✓' : ' — нет работы');
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
 
-  // ==== КОМАНДЫ ====
-  function loadTeams() {
-    var teams = getTeams();
-    var tbody = document.querySelector('#teamsTbl tbody');
-    tbody.innerHTML = '';
-    if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="6">Пока нет команд.</td></tr>'; return; }
-    var base = baseUrl();
-    teams.forEach(function(t) {
-      var link = base + 'menu.html?token=' + t.token + '&team=' + t.id;
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + t.id + '</td>' +
-        '<td><b>' + t.name + '</b></td>' +
-        '<td><code>' + t.token + '</code></td>' +
-        '<td style="font-size:13px;">' + (CASES_META[t.caseId] || '—') + '</td>' +
-        '<td><a href="' + link + '" target="_blank" style="font-size:13px; word-break:break-all;">' + link + '</a></td>' +
-        '<td><button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button></td>';
-      tbody.appendChild(tr);
-    });
-  }
-  function copyLink(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function(){ alert('Скопировано'); }, function(){ fallbackCopy(text); });
-    } else { fallbackCopy(text); }
-  }
-  function fallbackCopy(text) {
-    var ta = document.createElement('textarea'); ta.value = text;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); alert('Скопировано'); } catch (e) { prompt('Скопируйте:', text); }
-    document.body.removeChild(ta);
-  }
-
-  // ==== ТУР 1 КВИЗ ====
-  function loadTour1Quiz() {
-    var teams = getTeams();
-    var tbody = document.querySelector('#tour1QuizTbl tbody');
-    tbody.innerHTML = '';
-    if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Нет команд.</td></tr>'; return; }
-    var rows = teams.map(function(t) {
-      var r = null;
-      try { r = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
-      return { name: t.name, score: r ? r.correct : 0, time: r ? r.time : null, done: !!r };
-    });
-    rows.sort(function(a, b) { return b.score - a.score; });
-    rows.forEach(function(r, i) {
-      var tr = document.createElement('tr');
-      if (i === 0 && rows.length > 1 && r.score > 0) tr.className = 'leader';
-      tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
-        '<td>' + (r.done ? '<span class="badge ok">' + r.score + ' / 30</span>' : '<span class="badge">не прошёл</span>') + '</td>' +
-        '<td style="font-size:13px; color:#666;">' + (r.time ? new Date(r.time).toLocaleString('ru-RU') : '') + '</td>';
-      tbody.appendChild(tr);
-    });
-  }
-
-  // ==== ТУР 1 КЕЙСЫ ====
-  function loadCases() {
-    var teams = getTeams();
-    var box = document.getElementById('casesBox');
-    box.innerHTML = '';
-    if (teams.length === 0) { box.innerHTML = '<p>Нет команд.</p>'; return; }
-    teams.forEach(function(t) {
-      var caseData = null;
-      try { caseData = JSON.parse(localStorage.getItem('case_team_' + t.id) || 'null'); } catch (e) {}
-      var parts = (localStorage.getItem('case_score_' + t.id) || '0,0,0').split(',').map(Number);
-      var html = '<div class="case-block">' +
-        '<h4>Команда: ' + t.name + '</h4>' +
-        '<p><b>Кейс:</b> ' + (caseData ? caseData.caseTitle : (CASES_META[t.caseId] || '—')) + '</p>';
-      if (caseData) {
-        html += '<p><b>Ответ:</b></p>' +
-          '<div class="case-answer">' + (caseData.answer || '(пусто)').replace(/</g, '&lt;') + '</div>' +
-          '<p style="color:var(--muted); font-size:13px;">Отправлено: ' + new Date(caseData.time).toLocaleString('ru-RU') + '</p>';
-      } else {
-        html += '<p style="color:var(--muted);">Команда ещё не отправила ответ.</p>';
-      }
-      html += '<p class="criteria-list"><b>Критерии:</b> 1) Замечена опасность 0–2; 2) Названы признаки 0–2; 3) Правильные действия 0–1</p>' +
-        '<div class="score-row">' +
-        '<label>Крит.1: <input type="number" min="0" max="2" id="c1_' + t.id + '" value="' + (parts[0] || 0) + '"></label>' +
-        '<label>Крит.2: <input type="number" min="0" max="2" id="c2_' + t.id + '" value="' + (parts[1] || 0) + '"></label>' +
-        '<label>Крит.3: <input type="number" min="0" max="1" id="c3_' + t.id + '" value="' + (parts[2] || 0) + '"></label>' +
-        '<button class="btn btn-primary" onclick="saveScore(' + t.id + ')">Сохранить</button>' +
-        '<span id="saved_' + t.id + '" style="color:var(--ok); font-weight:600;"></span>' +
-        '</div></div>';
-      box.insertAdjacentHTML('beforeend', html);
-    });
-  }
-  function saveScore(teamId) {
-    var c1 = Math.max(0, Math.min(2, Number(document.getElementById('c1_' + teamId).value) || 0));
-    var c2 = Math.max(0, Math.min(2, Number(document.getElementById('c2_' + teamId).value) || 0));
-    var c3 = Math.max(0, Math.min(1, Number(document.getElementById('c3_' + teamId).value) || 0));
-    localStorage.setItem('case_score_' + teamId, c1 + ',' + c2 + ',' + c3);
-    var lbl = document.getElementById('saved_' + teamId);
-    lbl.textContent = 'Сохранено: ' + (c1 + c2 + c3) + ' / 5';
-    setTimeout(function() { lbl.textContent = ''; }, 3000);
-    loadSummary();
-  }
-
-  // ==== ТУР 2 ====
-  function loadTour2() {
-    var teams = getTeams();
-    var tbody = document.querySelector('#tour2Tbl tbody');
-    tbody.innerHTML = '';
-    if (teams.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Нет команд.</td></tr>'; return; }
-    var rows = teams.map(function(t) {
-      var r = null;
-      try { r = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
-      return { name: t.name, score: r ? r.correct : 0, time: r ? r.time : null, done: !!r };
-    });
-    rows.sort(function(a, b) { return b.score - a.score; });
-    rows.forEach(function(r, i) {
-      var tr = document.createElement('tr');
-      if (i === 0 && rows.length > 1 && r.score > 0) tr.className = 'leader';
-      tr.innerHTML = '<td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
-        '<td>' + (r.done ? '<span class="badge ok">' + r.score + ' / 8</span>' : '<span class="badge">не прошёл</span>') + '</td>' +
-        '<td style="font-size:13px; color:#666;">' + (r.time ? new Date(r.time).toLocaleString('ru-RU') : '') + '</td>';
-      tbody.appendChild(tr);
-    });
-  }
-
-  // ==== ТУР 3 ====
-  function fillTour3Select() {
-    var teams = getTeams();
-    var sel = document.getElementById('workSelect');
-    var prev = sel.value;
-    sel.innerHTML = '';
-    if (teams.length === 0) { var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return; }
-    teams.forEach(function(t) {
-      var has = false;
-      try { has = !!JSON.parse(localStorage.getItem('result3_team_' + t.id) || 'null'); } catch (e) {}
-      var opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.name + (has ? ' ✓' : ' — нет работы');
-      sel.appendChild(opt);
-    });
-    if (prev) sel.value = prev;
-  }
-
-  function showWork() {
-    var teamId = document.getElementById('workSelect').value;
-    var box = document.getElementById('workPreview');
-    if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
-    var data = null;
-    try { data = JSON.parse(localStorage.getItem('result3_team_' + teamId) || 'null'); } catch (e) {}
-    if (!data) { box.innerHTML = '<div class="case-block"><p>Команда ещё не загрузила работу.</p></div>'; return; }
-    var scores = (localStorage.getItem('score3_team_' + teamId) || '0,0,0,0').split(',').map(Number);
-    var previewHtml = '';
-    if (data.fileUrl) {
-      var ext = (data.fileUrl.split('.').pop() || '').toLowerCase();
-      if (['jpg','jpeg','png','webp','gif'].indexOf(ext) !== -1) previewHtml = '<img src="' + data.fileUrl + '" alt="work">';
-      else if (ext === 'mp4' || ext === 'webm') previewHtml = '<video src="' + data.fileUrl + '" controls></video>';
-      else if (ext === 'pdf') previewHtml = '<iframe src="' + data.fileUrl + '"></iframe>';
-      else previewHtml = '<p><a class="work-link" href="' + data.fileUrl + '" target="_blank">' + data.fileUrl + '</a></p>';
-    } else if (data.link) {
-      var link = data.link;
-      if (/t\.me|vk\.com|youtube\.com|youtu\.be/i.test(link)) {
-        previewHtml = '<iframe src="' + link + '" allowfullscreen></iframe>' +
-          '<p class="work-link" style="margin-top:10px;"><a href="' + link + '" target="_blank">Открыть в новой вкладке →</a></p>';
-      } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(link)) {
-        previewHtml = '<img src="' + link + '" alt="work">';
-      } else {
-        previewHtml = '<p class="work-link"><a href="' + link + '" target="_blank">' + link + '</a></p>';
-      }
-    }
-    var sum = scores.reduce(function(a, b) { return a + b; }, 0);
-    box.innerHTML =
-      '<div class="case-block">' +
-        '<div class="work-header">' +
-          '<div>' +
-            '<h4>' + data.teamName + '</h4>' +
-            '<p class="work-meta">Формат: <b>' + (data.formatTitle || '—') + '</b> · Тема: <b>' + (data.topicTitle || '—') + '</b></p>' +
-            '<p class="work-meta">Загружено: ' + (data.time ? new Date(data.time).toLocaleString('ru-RU') : '') + '</p>' +
-          '</div>' +
-          '<div class="score-live" id="scoreLive_' + teamId + '">Итог: ' + sum + ' / 10</div>' +
-        '</div>' +
-        '<p><b>Описание работы:</b></p>' +
-        '<div class="case-answer">' + (data.description || '').replace(/</g, '&lt;') + '</div>' +
-        '<p style="margin-top:14px;"><b>Работа:</b></p>' +
-        '<div class="work-preview">' + previewHtml + '</div>' +
-        '<p class="criteria-list"><b>Критерии:</b> 1) Понятность 0–3; 2) Точность 0–3; 3) Оригинальность 0–3; 4) Соответствие 0–1</p>' +
-        '<div class="score-row">' +
-          '<label>Понятность: <input type="number" min="0" max="3" id="w1_' + teamId + '" value="' + (scores[0] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
-          '<label>Точность: <input type="number" min="0" max="3" id="w2_' + teamId + '" value="' + (scores[1] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
-          '<label>Оригинальность: <input type="number" min="0" max="3" id="w3_' + teamId + '" value="' + (scores[2] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
-          '<label>Соответствие: <input type="number" min="0" max="1" id="w4_' + teamId + '" value="' + (scores[3] || 0) + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
-        '</div>' +
-        '<div class="nav-buttons">' +
-          '<button class="btn btn-primary" onclick="saveWorkScore(' + teamId + ')">Сохранить оценку</button>' +
-          '<button class="btn btn-secondary" onclick="nextWork()">Следующая →</button>' +
-          '<span id="savedWork_' + teamId + '" style="color:var(--ok); font-weight:600;"></span>' +
-        '</div>' +
-      '</div>';
-  }
-  function updateWorkSum(teamId) {
-    var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
-    var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
-    var c3 = Math.max(0, Math.min(3, Number(document.getElementById('w3_' + teamId).value) || 0));
-    var c4 = Math.max(0, Math.min(1, Number(document.getElementById('w4_' + teamId).value) || 0));
-    var el = document.getElementById('scoreLive_' + teamId);
-    if (el) el.textContent = 'Итог: ' + (c1 + c2 + c3 + c4) + ' / 10';
-  }
-  function saveWorkScore(teamId) {
-    var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
-    var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
-    var c3 = Math.max(0, Math.min(3, Number(document.getElementById('w3_' + teamId).value) || 0));
-    var c4 = Math.max(0, Math.min(1, Number(document.getElementById('w4_' + teamId).value) || 0));
-    localStorage.setItem('score3_team_' + teamId, c1 + ',' + c2 + ',' + c3 + ',' + c4);
-    var lbl = document.getElementById('savedWork_' + teamId);
-    if (lbl) { lbl.textContent = 'Сохранено: ' + (c1 + c2 + c3 + c4) + ' / 10'; setTimeout(function(){ lbl.textContent = ''; }, 3000); }
-    loadSummary();
-  }
-  function nextWork() {
-    var sel = document.getElementById('workSelect');
-    if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex += 1; showWork(); }
-    else alert('Последняя команда.');
-  }
-
-  // ==== ТУР 4 ====
-  function fillTour4Select() {
-    var teams = getTeams();
-    var sel = document.getElementById('tour4Select');
-    var prev = sel.value;
-    sel.innerHTML = '';
-    if (teams.length === 0) { var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return; }
-    teams.forEach(function(t) {
-      var has = false;
-      try { has = !!JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
-      var opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.name + (has ? ' ✓' : ' — не играл');
-      sel.appendChild(opt);
-    });
-    if (prev) sel.value = prev;
-  }
-
-  function showTour4() {
-    var teamId = document.getElementById('tour4Select').value;
-    var box = document.getElementById('tour4Preview');
-    if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
-
-    var data = null;
-    try { data = JSON.parse(localStorage.getItem('result4_team_' + teamId) || 'null'); } catch (e) {}
-    if (!data) { box.innerHTML = '<div class="tour4-block"><p>Команда ещё не играла в Тур 4.</p></div>'; return; }
-
-    var s1 = data.stage1 || {};
-    var s2 = data.stage2 || {};
-    var st2Score = data.stage2Score || 0;
-
-    var html = '<div class="tour4-block">' +
-      '<h4>Команда: ' + (data.teamName || '—') + '</h4>' +
-      '<div class="stat-line"><span>Этап 1. Найдено объектов</span><b>' + (s1.totalFound || 0) + ' / 10</b></div>' +
-      '<div class="stat-line"><span>Этап 1. Алгоритмов верно</span><b>' + (s1.algorithmsCorrect || 0) + ' / 6</b></div>' +
-      '<div class="stat-line"><span>Этап 1. Промахов</span><b>' + (s1.totalMisses || 0) + '</b></div>' +
-      '<div class="stat-line"><span>Этап 1. Время игры</span><b>' + formatTime(s1.duration || 0) + '</b></div>' +
-      '<div class="stat-line"><span><b>Этап 1. Очки</b></span><b>' + (s1.score || 0) + '</b></div>' +
-      '</div>';
-
-    // Этап 2 — симулятор
-    html += '<div class="tour4-block">' +
-      '<h4>Этап 2. Симулятор</h4>';
-
-    var SIM_TITLES = {
-      tg: 'Ситуация 1. Странное сообщение',
-      bag: 'Ситуация 2. Бесхозная сумка',
-      friend: 'Ситуация 3. Друг втягивается'
-    };
-
-    if (Object.keys(s2).length === 0) {
-      html += '<p style="color:var(--muted);">Этап 2 не пройден.</p>';
+function showWork() {
+  var teamId = document.getElementById('workSelect').value;
+  var box = document.getElementById('workPreview');
+  if (!box) return;
+  if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
+  var data = null;
+  try { data = JSON.parse(localStorage.getItem('result3_team_' + teamId) || 'null'); } catch (e) {}
+  if (!data) { box.innerHTML = '<div class="case-block"><p>Команда ещё не загрузила работу.</p></div>'; return; }
+  var scores = (localStorage.getItem('score3_team_' + teamId) || '0,0,0,0').split(',').map(function(x){ return Number(x) || 0; });
+  var previewHtml = '';
+  if (data.fileUrl) {
+    var ext = (data.fileUrl.split('.').pop() || '').toLowerCase();
+    if (['jpg','jpeg','png','webp','gif'].indexOf(ext) !== -1) previewHtml = '<img src="' + data.fileUrl + '" alt="work">';
+    else if (ext === 'mp4' || ext === 'webm') previewHtml = '<video src="' + data.fileUrl + '" controls></video>';
+    else if (ext === 'pdf') previewHtml = '<iframe src="' + data.fileUrl + '"></iframe>';
+    else previewHtml = '<p><a class="work-link" href="' + data.fileUrl + '" target="_blank">' + data.fileUrl + '</a></p>';
+  } else if (data.link) {
+    var link = data.link;
+    if (/t\.me|vk\.com|youtube\.com|youtu\.be/i.test(link)) {
+      previewHtml = '<iframe src="' + link + '" allowfullscreen></iframe>' +
+        '<p class="work-link" style="margin-top:10px;"><a href="' + link + '" target="_blank">Открыть в новой вкладке →</a></p>';
+    } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(link)) {
+      previewHtml = '<img src="' + link + '" alt="work">';
     } else {
-      Object.keys(s2).forEach(function(key) {
-        var s = s2[key];
-        html += '<div class="stat-line">' +
-          '<span>' + (SIM_TITLES[key] || key) + '</span>' +
-          '<b>' + (s.score || 0) + ' прав.</b>' +
-          '</div>';
-      });
+      previewHtml = '<p class="work-link"><a href="' + link + '" target="_blank">' + link + '</a></p>';
     }
-    html += '<div class="stat-line" style="border-top:2px solid var(--primary); margin-top:8px; padding-top:10px;">' +
-      '<span><b>Этап 2. Очки</b></span><b>' + st2Score + '</b></div>';
-    html += '</div>';
-
-    var total = (s1.score || 0) + st2Score;
-    html += '<div class="tour4-block" style="background: #e6f4ea;">' +
-      '<div class="stat-line" style="font-size:18px;">' +
-      '<span><b>Итого за Тур 4</b></span><b>' + total + ' / 46</b></div>' +
-      '</div>';
-
-    box.innerHTML = html;
   }
+  var sum = scores.reduce(function(a, b) { return a + b; }, 0);
+  box.innerHTML =
+    '<div class="case-block">' +
+      '<div class="work-header">' +
+        '<div>' +
+          '<h4>' + data.teamName + '</h4>' +
+          '<p class="work-meta">Формат: <b>' + (data.formatTitle || '—') + '</b> · Тема: <b>' + (data.topicTitle || '—') + '</b></p>' +
+          '<p class="work-meta">Загружено: ' + (data.time ? new Date(data.time).toLocaleString('ru-RU') : '') + '</p>' +
+        '</div>' +
+        '<div class="score-live" id="scoreLive_' + teamId + '">Итог: ' + sum + ' / 10</div>' +
+      '</div>' +
+      '<p><b>Описание работы:</b></p>' +
+      '<div class="case-answer">' + (data.description || '').replace(/</g, '&lt;') + '</div>' +
+      '<p style="margin-top:14px;"><b>Работа:</b></p>' +
+      '<div class="work-preview">' + previewHtml + '</div>' +
+      '<p class="criteria-list"><b>Критерии:</b> 1) Понятность 0–3; 2) Точность 0–3; 3) Оригинальность 0–3; 4) Соответствие 0–1</p>' +
+      '<div class="score-row">' +
+        '<label>Понятность: <input type="number" min="0" max="3" id="w1_' + teamId + '" value="' + scores[0] + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
+        '<label>Точность: <input type="number" min="0" max="3" id="w2_' + teamId + '" value="' + scores[1] + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
+        '<label>Оригинальность: <input type="number" min="0" max="3" id="w3_' + teamId + '" value="' + scores[2] + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
+        '<label>Соответствие: <input type="number" min="0" max="1" id="w4_' + teamId + '" value="' + scores[3] + '" oninput="updateWorkSum(' + teamId + ')"></label>' +
+      '</div>' +
+      '<div class="nav-buttons">' +
+        '<button class="btn btn-primary" onclick="saveWorkScore(' + teamId + ')">Сохранить оценку</button>' +
+        '<button class="btn btn-secondary" onclick="nextWork()">Следующая →</button>' +
+        '<span id="savedWork_' + teamId + '" style="color:var(--ok); font-weight:600;"></span>' +
+      '</div>' +
+    '</div>';
+}
+function updateWorkSum(teamId) {
+  var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
+  var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
+  var c3 = Math.max(0, Math.min(3, Number(document.getElementById('w3_' + teamId).value) || 0));
+  var c4 = Math.max(0, Math.min(1, Number(document.getElementById('w4_' + teamId).value) || 0));
+  var el = document.getElementById('scoreLive_' + teamId);
+  if (el) el.textContent = 'Итог: ' + (c1 + c2 + c3 + c4) + ' / 10';
+}
+function saveWorkScore(teamId) {
+  var c1 = Math.max(0, Math.min(3, Number(document.getElementById('w1_' + teamId).value) || 0));
+  var c2 = Math.max(0, Math.min(3, Number(document.getElementById('w2_' + teamId).value) || 0));
+  var c3 = Math.max(0, Math.min(3, Number(document.getElementById('w3_' + teamId).value) || 0));
+  var c4 = Math.max(0, Math.min(1, Number(document.getElementById('w4_' + teamId).value) || 0));
+  localStorage.setItem('score3_team_' + teamId, c1 + ',' + c2 + ',' + c3 + ',' + c4);
+  var lbl = document.getElementById('savedWork_' + teamId);
+  if (lbl) { lbl.textContent = 'Сохранено: ' + (c1 + c2 + c3 + c4) + ' / 10'; setTimeout(function(){ lbl.textContent = ''; }, 3000); }
+  loadSummary();
+}
+function nextWork() {
+  var sel = document.getElementById('workSelect');
+  if (sel.selectedIndex < sel.options.length - 1) { sel.selectedIndex += 1; showWork(); }
+  else alert('Последняя команда.');
+}
 
-  function formatTime(sec) {
-    var m = Math.floor(sec / 60);
-    var s = sec % 60;
-    return m + ':' + (s < 10 ? '0' : '') + s;
-  }
+/* ===== ТУР 4 ===== */
+function fillTour4Select() {
+  var teams = getTeams();
+  var sel = document.getElementById('tour4Select');
+  if (!sel) return;
+  var prev = sel.value;
+  sel.innerHTML = '';
+  if (teams.length === 0) { var o = document.createElement('option'); o.textContent = '— нет команд —'; sel.appendChild(o); return; }
+  teams.forEach(function(t) {
+    var has = false;
+    try { has = !!JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+    var opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name + (has ? ' ✓' : ' — не играл');
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
 
-  // ==== СВОДКА ====
-  function loadSummary() {
-    var teams = getTeams();
-    var rows = teams.map(function(t) {
-      var q = null;
-      try { q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
-      var quiz = q ? q.correct : 0;
+function showTour4() {
+  var teamId = document.getElementById('tour4Select').value;
+  var box = document.getElementById('tour4Preview');
+  if (!box) return;
+  if (!teamId) { box.innerHTML = '<p>Нет команд.</p>'; return; }
+  var data = null;
+  try { data = JSON.parse(localStorage.getItem('result4_team_' + teamId) || 'null'); } catch (e) {}
+  if (!data) { box.innerHTML = '<div class="tour4-block"><p>Команда ещё не играла в Тур 4.</p></div>'; return; }
 
-      var cs = 0;
-      var s = localStorage.getItem('case_score_' + t.id);
-      if (s) cs = s.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
+  var s1 = data.stage1 || {};
+  var s2 = data.stage2 || {};
+  var st2Score = data.stage2Score || 0;
 
-      var t2 = null;
-      try { t2 = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
-      var tour2 = t2 ? t2.correct : 0;
+  var html = '<div class="tour4-block">' +
+    '<h4>Команда: ' + (data.teamName || '—') + '</h4>' +
+    '<div class="stat-line"><span>Этап 1. Найдено объектов</span><b>' + (s1.totalFound || 0) + ' / 10</b></div>' +
+    '<div class="stat-line"><span>Этап 1. Алгоритмов верно</span><b>' + (s1.algorithmsCorrect || 0) + ' / 6</b></div>' +
+    '<div class="stat-line"><span>Этап 1. Промахов</span><b>' + (s1.totalMisses || 0) + '</b></div>' +
+    '<div class="stat-line"><span>Этап 1. Время игры</span><b>' + formatTime(s1.duration || 0) + '</b></div>' +
+    '<div class="stat-line"><span><b>Этап 1. Очки</b></span><b>' + (s1.score || 0) + '</b></div>' +
+    '</div>';
 
-      var ts = 0;
-      var s3 = localStorage.getItem('score3_team_' + t.id);
-      if (s3) ts = s3.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
-
-      var t4 = null;
-      try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
-      var t4Score = 0;
-      if (t4) {
-        t4Score = (t4.stage1 && t4.stage1.score ? t4.stage1.score : 0) + (t4.stage2Score || 0);
-      }
-
-      var t1Total = quiz + cs;
-      var grand = t1Total + tour2 + ts + t4Score;
-
-      return { name: t.name, quiz: quiz, caseScore: cs, t1Total: t1Total, tour2: tour2, tour3: ts, tour4: t4Score, grand: grand };
+  html += '<div class="tour4-block"><h4>Этап 2. Симулятор</h4>';
+  if (Object.keys(s2).length === 0) {
+    html += '<p style="color:var(--muted);">Этап 2 не пройден.</p>';
+  } else {
+    Object.keys(s2).forEach(function(key) {
+      var s = s2[key] || {};
+      html += '<div class="stat-line"><span>' + (SIM_TITLES[key] || key) + '</span><b>' + (s.score || 0) + ' прав.</b></div>';
     });
-
-    rows.sort(function(a, b) { return b.grand - a.grand; });
-
-    var tbody = document.querySelector('#tbl tbody');
-    tbody.innerHTML = '';
-    if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9">Нет команд.</td></tr>'; return; }
-    rows.forEach(function(r, i) {
-      var tr = document.createElement('tr');
-      if (i === 0 && rows.length > 1 && r.grand > 0) tr.className = 'leader';
-      tr.innerHTML =
-        '<td>' + (i + 1) + '</td>' +
-        '<td>' + r.name + '</td>' +
-        '<td>' + r.quiz + ' / 30</td>' +
-        '<td>' + r.caseScore + ' / 5</td>' +
-        '<td><b>' + r.t1Total + ' / 35</b></td>' +
-        '<td>' + r.tour2 + ' / 8</td>' +
-        '<td>' + r.tour3 + ' / 10</td>' +
-        '<td>' + r.tour4 + ' / 46</td>' +
-        '<td><b>' + r.grand + ' / 99</b></td>';
-      tbody.appendChild(tr);
-    });
   }
+  html += '<div class="stat-line" style="border-top:2px solid var(--primary); margin-top:8px; padding-top:10px;">' +
+    '<span><b>Этап 2. Очки</b></span><b>' + st2Score + '</b></div></div>';
 
-  // ==== ОБЩИЕ ====
-  function load() {
-    loadTeams();
-    loadTour1Quiz();
-    loadCases();
-    loadTour2();
-    fillTour3Select();
-    if (document.getElementById('workSelect').value) showWork();
-    fillTour4Select();
-    if (document.getElementById('tour4Select').value) showTour4();
-    loadSummary();
-  }
+  var total = (s1.score || 0) + st2Score;
+  html += '<div class="tour4-block" style="background: #e6f4ea;">' +
+    '<div class="stat-line" style="font-size:18px;"><span><b>Итого за Тур 4</b></span><b>' + total + ' / 46</b></div></div>';
 
-  function exportCSV() {
-    var teams = getTeams();
-    var rows = [['Место', 'Команда', 'Т1 квиз (30)', 'Т1 кейс (5)', 'Т1 итого (35)', 'Т2 (8)', 'Т3 (10)', 'Т4 (46)', 'Общий (99)']];
-    var summary = teams.map(function(t) {
-      var q = null;
-      try { q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
-      var quiz = q ? q.correct : 0;
-      var cs = 0;
-      var s = localStorage.getItem('case_score_' + t.id);
-      if (s) cs = s.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
-      var t2 = null;
-      try { t2 = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
-      var tour2 = t2 ? t2.correct : 0;
-      var ts = 0;
-      var s3 = localStorage.getItem('score3_team_' + t.id);
-      if (s3) ts = s3.split(',').map(Number).reduce(function(a, b) { return a + b; }, 0);
-      var t4 = null;
-      try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
-      var t4Score = 0;
-      if (t4) t4Score = (t4.stage1 && t4.stage1.score ? t4.stage1.score : 0) + (t4.stage2Score || 0);
-      var t1 = quiz + cs;
-      return { name: t.name, quiz: quiz, cs: cs, t1: t1, t2: tour2, t3: ts, t4: t4Score, total: t1 + tour2 + ts + t4Score };
-    });
-    summary.sort(function(a, b) { return b.total - a.total; });
-    summary.forEach(function(r, i) { rows.push([i + 1, r.name, r.quiz, r.cs, r.t1, r.t2, r.t3, r.t4, r.total]); });
-    var csv = rows.map(function(r) { return r.join(';'); }).join('\n');
-    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'tournament-results.csv';
-    a.click();
-  }
+  box.innerHTML = html;
+}
 
-  function clearAll() {
-    if (!confirm('Удалить все демо-данные?')) return;
-    var toRemove = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k.indexOf('result_team_') === 0 || k.indexOf('result2_team_') === 0 ||
-          k.indexOf('result3_team_') === 0 || k.indexOf('result4_team_') === 0 ||
-          k.indexOf('case_team_') === 0 || k.indexOf('case_score_') === 0 ||
-          k.indexOf('score3_team_') === 0 || k === 'teams') {
-        toRemove.push(k);
-      }
+function formatTime(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+/* ===== СВОДКА ===== */
+function loadSummary() {
+  var teams = getTeams();
+  var rows = teams.map(function(t) {
+    var q = null;
+    try { q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
+    var quiz = q ? (q.correct || 0) : 0;
+    var cs = safeSum(localStorage.getItem('case_score_' + t.id));
+    var t2 = null;
+    try { t2 = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
+    var tour2 = t2 ? (t2.correct || 0) : 0;
+    var ts = safeSum(localStorage.getItem('score3_team_' + t.id));
+    var t4 = null;
+    try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+    var t4Score = 0;
+    if (t4) t4Score = ((t4.stage1 && t4.stage1.score) || 0) + (t4.stage2Score || 0);
+    var t1Total = quiz + cs;
+    return { name: t.name, quiz: quiz, caseScore: cs, t1Total: t1Total, tour2: tour2, tour3: ts, tour4: t4Score, grand: t1Total + tour2 + ts + t4Score };
+  });
+  rows.sort(function(a, b) { return b.grand - a.grand; });
+  var tbody = document.querySelector('#tbl tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="9">Нет команд.</td></tr>'; return; }
+  rows.forEach(function(r, i) {
+    var tr = document.createElement('tr');
+    if (i === 0 && rows.length > 1 && r.grand > 0) tr.className = 'leader';
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + r.name + '</td>' +
+      '<td>' + r.quiz + ' / 30</td>' +
+      '<td>' + r.caseScore + ' / 5</td>' +
+      '<td><b>' + r.t1Total + ' / 35</b></td>' +
+      '<td>' + r.tour2 + ' / 8</td>' +
+      '<td>' + r.tour3 + ' / 10</td>' +
+      '<td>' + r.tour4 + ' / 46</td>' +
+      '<td><b>' + r.grand + ' / 99</b></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===== ОБЩИЕ ===== */
+function load() {
+  loadTeams();
+  loadTour1Quiz();
+  loadCases();
+  loadTour2();
+  fillTour3Select();
+  var ws = document.getElementById('workSelect');
+  if (ws && ws.value) showWork();
+  fillTour4Select();
+  var t4s = document.getElementById('tour4Select');
+  if (t4s && t4s.value) showTour4();
+  loadSummary();
+}
+
+function exportCSV() {
+  var teams = getTeams();
+  var rows = [['Место', 'Команда', 'Т1 квиз (30)', 'Т1 кейс (5)', 'Т1 итого (35)', 'Т2 (8)', 'Т3 (10)', 'Т4 (46)', 'Общий (99)']];
+  var summary = teams.map(function(t) {
+    var q = null;
+    try { q = JSON.parse(localStorage.getItem('result_team_' + t.id) || 'null'); } catch (e) {}
+    var quiz = q ? (q.correct || 0) : 0;
+    var cs = safeSum(localStorage.getItem('case_score_' + t.id));
+    var t2 = null;
+    try { t2 = JSON.parse(localStorage.getItem('result2_team_' + t.id) || 'null'); } catch (e) {}
+    var tour2 = t2 ? (t2.correct || 0) : 0;
+    var ts = safeSum(localStorage.getItem('score3_team_' + t.id));
+    var t4 = null;
+    try { t4 = JSON.parse(localStorage.getItem('result4_team_' + t.id) || 'null'); } catch (e) {}
+    var t4Score = 0;
+    if (t4) t4Score = ((t4.stage1 && t4.stage1.score) || 0) + (t4.stage2Score || 0);
+    var t1 = quiz + cs;
+    return { name: t.name, quiz: quiz, cs: cs, t1: t1, t2: tour2, t3: ts, t4: t4Score, total: t1 + tour2 + ts + t4Score };
+  });
+  summary.sort(function(a, b) { return b.total - a.total; });
+  summary.forEach(function(r, i) { rows.push([i + 1, r.name, r.quiz, r.cs, r.t1, r.t2, r.t3, r.t4, r.total]); });
+  var csv = rows.map(function(r) { return r.join(';'); }).join('\n');
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tournament-results.csv';
+  a.click();
+}
+
+function clearAll() {
+  if (!confirm('Удалить все демо-данные?')) return;
+  var toRemove = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k.indexOf('result_team_') === 0 || k.indexOf('result2_team_') === 0 ||
+        k.indexOf('result3_team_') === 0 || k.indexOf('result4_team_') === 0 ||
+        k.indexOf('case_team_') === 0 || k.indexOf('case_score_') === 0 ||
+        k.indexOf('score3_team_') === 0 || k === 'teams') {
+      toRemove.push(k);
     }
-    toRemove.forEach(function(k) { localStorage.removeItem(k); });
-    load();
   }
+  toRemove.forEach(function(k) { localStorage.removeItem(k); });
+  load();
+}
 </script>
 
 </body>
