@@ -22,49 +22,44 @@
 <footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
 
 <script>
-  // 4 кейса. Каждой команде случайно выдаётся один.
-  var CASES = [
-    { id: 1, title: 'Переписка в мессенджере' },
-    { id: 2, title: 'Пост в соцсети' },
-    { id: 3, title: 'Подозрительный предмет в вузе' },
-    { id: 4, title: 'Лёгкий заработок' }
-  ];
+  var CASES = {
+    1: 'Переписка в мессенджере',
+    2: 'Пост в соцсети',
+    3: 'Подозрительный предмет в вузе',
+    4: 'Лёгкий заработок'
+  };
 
   var params = new URLSearchParams(location.search);
   var token  = params.get('token');
   var teamId = params.get('team');
   var card   = document.getElementById('card');
 
-  function getTeams() {
-    try { return JSON.parse(localStorage.getItem('teams') || '[]'); }
-    catch (e) { return []; }
-  }
-  function saveTeams(t) { localStorage.setItem('teams', JSON.stringify(t)); }
-
+  // Сценарий 1: пришли по QR с токеном
   if (token && teamId) {
-    var teams = getTeams();
-    var team = null;
-    for (var i = 0; i < teams.length; i++) {
-      if (String(teams[i].id) === String(teamId) && teams[i].token === token) {
-        team = teams[i]; break;
-      }
-    }
-    if (!team) {
-      card.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
-    } else {
-      var caseTitle = '—';
-      for (var j = 0; j < CASES.length; j++) {
-        if (CASES[j].id === team.caseId) caseTitle = CASES[j].title;
-      }
-      card.innerHTML =
-        '<h2>Привет, ' + team.name + '!</h2>' +
-        '<p>Команда #' + team.id + '. Ваш ситуационный кейс: <b>' + caseTitle + '</b>.</p>' +
-        '<p style="margin-top:20px;"><a class="btn btn-primary" href="menu.html?team=' + team.id + '&token=' + team.token + '">Перейти в меню туров →</a></p>';
-    }
+    fetch('/api/teams/by-token?token=' + encodeURIComponent(token))
+      .then(function(r) {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then(function(team) {
+        if (!team || String(team.id) !== String(teamId)) {
+          card.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
+          return;
+        }
+        var caseTitle = CASES[team.caseId] || '—';
+        card.innerHTML =
+          '<h2>Привет, ' + team.name + '!</h2>' +
+          '<p>Команда #' + team.id + '. Ваш ситуационный кейс: <b>' + caseTitle + '</b>.</p>' +
+          '<p style="margin-top:20px;"><a class="btn btn-primary" href="menu.html?team=' + team.id + '&token=' + team.token + '">Перейти в меню туров →</a></p>';
+      })
+      .catch(function() {
+        card.innerHTML = '<h2>Команда не найдена</h2><p>Обратитесь к организатору.</p>';
+      });
   } else {
+    // Сценарий 2: организатор регистрирует вручную
     card.innerHTML =
       '<h2>Регистрация команды</h2>' +
-      '<p>Введите название команды.</p>' +
+      '<p>Введите название команды — она сохранится на сервере.</p>' +
       '<label for="name">Название команды</label>' +
       '<input id="name" type="text" placeholder="Например: Правоведы" />' +
       '<button class="btn btn-primary" onclick="register()">Зарегистрировать</button>' +
@@ -73,30 +68,39 @@
 
   function register() {
     var name = document.getElementById('name').value.trim() || 'Без названия';
-    var teams = getTeams();
-    var caseId = CASES[Math.floor(Math.random() * CASES.length)].id;
-    var team = {
-      id: teams.length + 1,
-      name: name,
-      token: Math.random().toString(36).slice(2, 10),
-      caseId: caseId
-    };
-    teams.push(team);
-    saveTeams(teams);
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Регистрация...';
 
-    var caseTitle = '—';
-    for (var k = 0; k < CASES.length; k++) {
-      if (CASES[k].id === caseId) caseTitle = CASES[k].title;
-    }
-
-    document.getElementById('result').innerHTML =
-      '<div class="msg ok">Команда зарегистрирована</div>' +
-      '<p><b>' + team.name + '</b></p>' +
-      '<p class="badge">Токен: ' + team.token + '</p>' +
-      '<p>Ваш кейс: <b>' + caseTitle + '</b></p>' +
-      '<p style="margin-top:16px;">' +
-        '<a class="btn btn-secondary" href="join.html?token=' + team.token + '&team=' + team.id + '">Открыть страницу команды →</a>' +
-      '</p>';
+    fetch('/api/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(team) {
+        var caseTitle = CASES[team.caseId] || '—';
+        var base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
+        var link = base + 'menu.html?token=' + team.token + '&team=' + team.id;
+        document.getElementById('result').innerHTML =
+          '<div class="msg ok">Команда сохранена на сервере</div>' +
+          '<p><b>' + team.name + '</b></p>' +
+          '<p class="badge">Токен: ' + team.token + '</p>' +
+          '<p>Ситуационный кейс: <b>' + caseTitle + '</b></p>' +
+          '<p style="margin-top:16px;"><b>Ссылка для команды:</b></p>' +
+          '<p style="font-size:13px; word-break:break-all;"><a href="' + link + '">' + link + '</a></p>' +
+          '<p style="margin-top:12px;">' +
+            '<a class="btn btn-secondary" href="' + link + '">Открыть страницу команды →</a>' +
+          '</p>';
+        btn.disabled = false;
+        btn.textContent = 'Зарегистрировать ещё одну';
+        document.getElementById('name').value = '';
+      })
+      .catch(function(err) {
+        alert('Ошибка: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Зарегистрировать';
+      });
   }
 </script>
 
