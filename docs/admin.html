@@ -152,7 +152,7 @@
     <div class="card">
       <h2>Тур 2. Психологический иммунитет</h2>
       <table class="table" id="tour2Tbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Балл</th><th>Спид</th><th>Идеал</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Квиз</th><th>⚔️ Дуэли</th><th>Итого</th><th>Спид</th><th>Идеал</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -354,15 +354,36 @@ function saveCaseScore(teamId){
 function renderTour2(){
   var tbody = document.querySelector('#tour2Tbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="6">Нет команд.</td></tr>'; return; }
-  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, bonus:t.t2.bonus, quality:t.t2.quality, time:t.t2.time, done:!!t.t2.time }; });
-  rows.sort(function(a,b){ return b.score - a.score; });
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="8">Нет команд.</td></tr>'; return; }
+  var rows = allData.teams.map(function(t){ return {
+    name: t.name, emoji: t.emoji, color: t.color,
+    score: t.t2.correct,
+    duelScore: t.t2.duelScore || 0,
+    duelWins: t.t2.duelWins || 0,
+    combinedTotal: t.t2.combinedTotal || t.t2.correct,
+    bonus: t.t2.bonus,
+    quality: t.t2.quality,
+    time: t.t2.time,
+    done: !!t.t2.time
+  }; });
+  rows.sort(function(a,b){ return b.combinedTotal - a.combinedTotal; });
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
-    if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
+    if (i===0 && rows.length>1 && r.combinedTotal>0) tr.className='leader';
+
+    var duelCell = r.duelScore > 0
+      ? '<span class="badge-bonus gold">⚔️ +' + r.duelScore + '</span>' + (r.duelWins > 0 ? ' <span style="font-size:11px;color:#5a6470;">(' + r.duelWins + ' поб.)</span>' : '')
+      : '—';
+
+    var totalCell = r.done || r.duelScore > 0
+      ? '<b>' + Math.round(r.combinedTotal * 100) / 100 + '</b>'
+      : '—';
+
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 20</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+      '<td>'+duelCell+'</td>' +
+      '<td>'+totalCell+'</td>' +
       '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
       '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
