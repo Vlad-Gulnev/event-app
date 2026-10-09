@@ -56,6 +56,15 @@
 .badge-bonus{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#fff3cd;color:#856404;margin-left:6px}
 .badge-bonus.gold{background:#ffe082;color:#664d03}
 .badge-quality{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#e6f4ea;color:#1f6d2f;margin-left:4px}
+.badges-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;padding:40px;overflow-y:auto}
+.badges-modal{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;padding:32px}
+.badges-modal h2{margin:0 0 20px;color:#0f5d92;font-size:26px}
+.badges-team{border:1px solid #d9dde3;border-radius:10px;padding:16px;margin:12px 0}
+.badges-team-title{font-size:20px;font-weight:700;margin-bottom:10px}
+.badges-team-title .emoji{font-size:28px}
+.badge-pill{display:inline-block;margin:4px 8px 4px 0;padding:6px 12px;background:#e6f4ea;border-radius:999px;font-size:14px}
+.badge-pill .b-icon{font-size:18px}
+.badge-pill .b-desc{color:#5a6470;font-size:12px}
 </style>
 </head>
 <body>
@@ -548,25 +557,30 @@ function clearAll(){
 function openLeaderboard(){ window.open('leaderboard.html', '_blank'); }
 function openMap(){ window.open('map.html', '_blank'); }
 
+function closeBadgesModal(){
+  var m = document.getElementById('badgesModal');
+  if (m) m.remove();
+}
+
 function showAllBadges(){
   if (!allData) return;
-  var html = '<div id="badgesModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;padding:40px;overflow-y:auto;">';
-  html += '<div style="max-width:900px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;">';
-  html += '<h2 style="margin:0 0 20px;color:#0f5d92;font-size:26px;">🏅 Достижения команд</h2>';
+  var html = '<div id="badgesModal" class="badges-modal-overlay">';
+  html += '<div class="badges-modal">';
+  html += '<h2>🏅 Достижения команд</h2>';
   var sorted = allData.teams.slice().sort(function(a,b){ return (b.badges||[]).length - (a.badges||[]).length; });
   sorted.forEach(function(t){
-    html += '<div style="border:1px solid #d9dde3;border-radius:10px;padding:16px;margin:12px 0;">';
-    html += '<div style="font-size:20px;font-weight:700;margin-bottom:10px;"><span style="font-size:28px;">' + t.emoji + '</span> ' + t.name + '</div>';
+    html += '<div class="badges-team">';
+    html += '<div class="badges-team-title"><span class="emoji">' + t.emoji + '</span> ' + t.name + '</div>';
     if (!t.badges || !t.badges.length) {
       html += '<p style="color:#5a6470;font-size:14px;">Пока без достижений</p>';
     } else {
       t.badges.forEach(function(b){
-        html += '<div style="display:inline-block;margin:4px 8px 4px 0;padding:6px 12px;background:#e6f4ea;border-radius:999px;font-size:14px;"><b style="font-size:18px;">' + b.icon + '</b> ' + b.title + ' <span style="color:#5a6470;font-size:12px;">— ' + b.desc + '</span></div>';
+        html += '<div class="badge-pill"><span class="b-icon">' + b.icon + '</span> ' + b.title + ' <span class="b-desc">— ' + b.desc + '</span></div>';
       });
     }
     html += '</div>';
   });
-  html += '<div style="text-align:center;margin-top:20px;"><button class="btn btn-secondary" onclick="document.getElementById(\\'badgesModal\\').remove()">Закрыть</button></div>';
+  html += '<div style="text-align:center;margin-top:20px;"><button class="btn btn-secondary" onclick="closeBadgesModal()">Закрыть</button></div>';
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
