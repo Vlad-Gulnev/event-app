@@ -92,6 +92,7 @@
       <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
       <button class="btn btn-primary" onclick="openMap()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#2e7d32;">🗺 Карта мероприятия</button>
       <button class="btn btn-primary" onclick="showAllBadges()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#b58b2a;">🏅 Все достижения</button>
+      <button class="btn btn-primary" onclick="openDuelAdmin()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#0f5d92;">⚔️ Дуэли</button>
       <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
       <button class="btn-fanfare" onclick="playTruckHorn()" style="background:linear-gradient(90deg,#5d4037,#c8102e);">🚛 Гудок камаза</button>
     </div>
@@ -554,6 +555,7 @@ function clearAll(){
   fetch('/api/admin/clear-all', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ confirm: 'YES' }) }).then(function(){ load(); });
 }
 
+function openDuelAdmin(){ window.open('duel-admin.html', '_blank'); }
 function openLeaderboard(){ window.open('leaderboard.html', '_blank'); }
 function openMap(){ window.open('map.html', '_blank'); }
 

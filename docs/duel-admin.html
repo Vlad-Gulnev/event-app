@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дуэли — Админка</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.d-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 20px;padding:16px;background:#f7f9fc;border-radius:var(--radius);border:1px solid var(--border)}
+.d-toolbar .label{font-weight:700;color:var(--primary-dark);margin-right:8px}
+.d-btn{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700}
+.d-btn:hover{background:var(--primary-dark)}
+.d-btn.sec{background:#fff;color:var(--text);border:1px solid var(--border)}
+.d-btn.sec:hover{background:#eef1f5}
+.d-btn.danger{background:#fdecec;color:var(--err);border:1px solid #f4c5c5}
+.d-btn.danger:hover{background:#fbdcdc}
+.d-btn.gold{background:linear-gradient(90deg,#b58b2a,#c8102e);color:#fff}
+
+.sched-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-top:12px}
+.sched-table th,.sched-table td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:15px}
+.sched-table th{background:#eef2f6;color:var(--primary-dark);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.03em}
+.sched-table tr:last-child td{border-bottom:none}
+.sched-table tr.done{background:#e6f4ea}
+.sched-table tr.running{background:#fff3cd;animation:softBlink 1.6s infinite}
+@keyframes softBlink{0%,100%{background:#fff3cd}50%{background:#fff8e1}}
+.sched-table tr.done td{opacity:0.7}
+.team-cell{display:flex;align-items:center;gap:8px;font-weight:600}
+.team-cell .emj{font-size:22px}
+.color-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+.status-pill{display:inline-block;padding:3px 10px;font-size:12px;font-weight:700;border-radius:999px}
+.status-pill.pending{background:#eef1f5;color:var(--muted)}
+.status-pill.running{background:#fff3cd;color:#856404}
+.status-pill.done{background:#e6f4ea;color:#2e7d32}
+
+.q-badge{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:6px;background:#e6f2fa;color:var(--primary-dark)}
+
+.score-cell{font-weight:900;font-size:16px;color:var(--primary-dark)}
+.score-cell.win{color:#2e7d32}
+.score-cell.lose{color:#c62828}
+
+.add-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin:12px 0;padding:16px;background:#f7f9fc;border-radius:var(--radius);border:1px solid var(--border);align-items:end}
+.add-form select{padding:10px 12px;font-size:15px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit}
+.add-form .form-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;display:block}
+
+.hint-box{background:#e6f2fa;border-left:4px solid var(--primary);padding:12px 16px;border-radius:8px;margin:12px 0;font-size:14px;color:var(--primary-dark);line-height:1.5}
+.hint-box b{font-weight:700}
+
+.active-banner{padding:16px 20px;background:linear-gradient(90deg,#fff3cd,#ffe082);border-radius:var(--radius);border:2px solid #d4a017;margin-bottom:16px;font-size:15px;color:#664d03;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.active-banner .left{display:flex;align-items:center;gap:12px}
+.active-banner .emj{font-size:32px}
+.active-banner .live{width:12px;height:12px;background:#c8102e;border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">Координационный центр · ЯрГУ им. П.Г. Демидова</div>
+    <h1>⚔️ Дуэли команд</h1>
+  </div>
+</header>
+
+<main class="container wide">
+
+  <div class="card">
+    <div id="activeBox"></div>
+
+    <div class="hint-box">
+      <b>Как проводить дуэли:</b><br>
+      1. Откройте <b>Колесо фортуны</b> на проекторе и определите пару.<br>
+      2. Добавьте пару в расписание (кнопка ниже или вручную).<br>
+      3. Нажмите <b>«Старт»</b> на нужной дуэли — команды получат вопрос на телефоны.<br>
+      4. Через 60 секунд или когда все ответят — результат появится на проекторе.<br>
+      5. Нажмите <b>«Следующая»</b> — или сразу <b>Старт</b> для следующей дуэли.
+    </div>
+
+    <div class="d-toolbar">
+      <button class="d-btn gold" onclick="openWheel()">🎡 Открыть колесо</button>
+      <button class="d-btn" onclick="openProjector()">📺 Открыть проектор</button>
+      <button class="d-btn sec" onclick="loadAll()">🔄 Обновить</button>
+      <button class="d-btn danger" onclick="clearSchedule()">🗑 Очистить расписание</button>
+    </div>
+
+    <div class="add-form">
+      <div>
+        <label class="form-label">Команда А</label>
+        <select id="teamASelect"></select>
+      </div>
+      <div>
+        <label class="form-label">Команда Б</label>
+        <select id="teamBSelect"></select>
+      </div>
+      <button class="d-btn" onclick="addPair()">+ Добавить пару</button>
+    </div>
+
+    <h2>Расписание дуэлей</h2>
+    <table class="sched-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Команда А</th><th>Команда Б</th><th>Вопрос</th><th>Статус</th><th>Результат</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="schedBody"><tr><td colspan="7">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>История дуэлей</h2>
+    <table class="sched-table">
+      <thead>
+        <tr><th>#</th><th>Команда А</th><th>Команда Б</th><th>Вопрос</th><th>Ответ А</th><th>Ответ Б</th><th>Счёт</th></tr>
+      </thead>
+      <tbody id="historyBody"><tr><td colspan="7">История пуста</td></tr></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer class="site-footer">Координационный центр · ЯрГУ им. П.Г. Демидова</footer>
+
+<script>
+var allTeams = [];
+var allData = null;
+var pollTimer = null;
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadAll() {
+  Promise.all([
+    fetch('/api/teams').then(function(r) { return r.json(); }),
+    fetch('/api/duel/schedule').then(function(r) { return r.json(); }),
+    fetch('/api/duel/active').then(function(r) { return r.json(); })
+  ]).then(function(results) {
+    allTeams = results[0] || [];
+    var schedule = results[1] || { schedule: [], history: [] };
+    var active = results[2] || { active: false };
+
+    renderActive(active);
+    renderSchedule(schedule.schedule, active.duel);
+    renderHistory(schedule.history || []);
+    fillTeamSelects();
+  }).catch(function(err) {
+    console.error(err);
+  });
+}
+
+function renderActive(active) {
+  var box = document.getElementById('activeBox');
+  if (active && active.duel && active.duel.status === 'running') {
+    var d = active.duel;
+    box.innerHTML =
+      '<div class="active-banner">' +
+        '<div class="left"><span class="live"></span><span class="emj">⚔️</span>' +
+          '<span>Идёт дуэль №' + d.id + ': ' + escapeHtml(d.teamA.name) + ' vs ' + escapeHtml(d.teamB.name) + '</span>' +
+        '</div>' +
+        '<button class="d-btn sec" onclick="finishNow()">⏹ Завершить сейчас</button>' +
+      '</div>';
+  } else if (active && active.duel && active.duel.status === 'finished') {
+    var d = active.duel;
+    var r = d.result || {};
+    box.innerHTML =
+      '<div class="active-banner" style="background:linear-gradient(90deg,#e6f4ea,#b8dfc2);border-color:#2e7d32;color:#1f6d2f;">' +
+        '<div class="left"><span class="emj">🏆</span>' +
+          '<span>Дуэль №' + d.id + ' завершена: ' + (r.scoreA||0) + ' : ' + (r.scoreB||0) + '</span>' +
+        '</div>' +
+        '<button class="d-btn sec" onclick="resetActive()">↺ Сбросить активную</button>' +
+      '</div>';
+  } else {
+    box.innerHTML = '<div class="hint-box" style="background:#eef1f5;border-color:#c0c8d2;color:#5a6470;"><b>Активной дуэли нет.</b> Нажмите «Старт» на нужной дуэли в расписании ниже.</div>';
+  }
+}
+
+function renderSchedule(schedule, activeDuel) {
+  var tbody = document.getElementById('schedBody');
+  if (!schedule || schedule.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">Расписание пусто. Добавьте первую пару.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  schedule.forEach(function(d) {
+    var tr = document.createElement('tr');
+    var cls = '';
+    var activeId = activeDuel ? activeDuel.id : null;
+    if (d.status === 'done') cls = 'done';
+    else if (activeId === d.id && activeDuel.status === 'running') cls = 'running';
+    tr.className = cls;
+
+    var statusHtml = '';
+    if (d.status === 'done') statusHtml = '<span class="status-pill done">✓ завершена</span>';
+    else if (activeId === d.id && activeDuel.status === 'running') statusHtml = '<span class="status-pill running">⏱ идёт</span>';
+    else statusHtml = '<span class="status-pill pending">— ожидает</span>';
+
+    var resultHtml = '—';
+    if (d.result) {
+      var clsA = d.result.scoreA > d.result.scoreB ? 'win' : (d.result.scoreA < d.result.scoreB ? 'lose' : '');
+      var clsB = d.result.scoreB > d.result.scoreA ? 'win' : (d.result.scoreB < d.result.scoreA ? 'lose' : '');
+      resultHtml = '<span class="score-cell ' + clsA + '">' + d.result.scoreA + '</span> : <span class="score-cell ' + clsB + '">' + d.result.scoreB + '</span>';
+    }
+
+    var actionsHtml = '';
+    if (d.status !== 'done' && !(activeId === d.id && activeDuel.status === 'running')) {
+      actionsHtml = '<button class="d-btn" style="padding:6px 12px;font-size:13px;" onclick="startDuel(' + d.id + ')">▶ Старт</button>';
+    } else if (activeId === d.id && activeDuel.status === 'running') {
+      actionsHtml = '<button class="d-btn sec" style="padding:6px 12px;font-size:13px;" onclick="finishNow()">⏹ Финиш</button>';
+    } else if (d.status === 'done') {
+      actionsHtml = '<button class="d-btn danger" style="padding:6px 12px;font-size:13px;" onclick="removeDuel(' + d.id + ')">✕ Удалить</button>';
+    }
+
+    tr.innerHTML =
+      '<td><b>' + d.id + '</b></td>' +
+      '<td>' + teamCell(d.teamA) + '</td>' +
+      '<td>' + teamCell(d.teamB) + '</td>' +
+      '<td><span class="q-badge">№' + d.questionId + '</span></td>' +
+      '<td>' + statusHtml + '</td>' +
+      '<td>' + resultHtml + '</td>' +
+      '<td style="text-align:right;">' + actionsHtml + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function teamCell(team) {
+  if (!team) return '—';
+  return '<div class="team-cell">' +
+    '<span class="emj">' + (team.emoji || '🛡') + '</span>' +
+    '<span class="color-dot" style="background:' + (team.color || '#157fc4') + '"></span>' +
+    '<span>' + escapeHtml(team.name) + '</span>' +
+  '</div>';
+}
+
+function renderHistory(history) {
+  var tbody = document.getElementById('historyBody');
+  if (!history || history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;">История пуста</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  history.slice().reverse().forEach(function(h) {
+    var tr = document.createElement('tr');
+    var ansA = h.answers && h.answers.A;
+    var ansB = h.answers && h.answers.B;
+    var r = h.result || {};
+    var clsA = r.scoreA > r.scoreB ? 'win' : (r.scoreA < r.scoreB ? 'lose' : '');
+    var clsB = r.scoreB > r.scoreA ? 'win' : (r.scoreB < r.scoreA ? 'lose' : '');
+
+    tr.innerHTML =
+      '<td><b>№' + h.id + '</b></td>' +
+      '<td>' + teamCell(h.teamA) + '</td>' +
+      '<td>' + teamCell(h.teamB) + '</td>' +
+      '<td><span class="q-badge">№' + h.questionId + '</span></td>' +
+      '<td>' + (ansA ? (r.correctA ? '✓ правильный' : '✗ неправильный') + ' · ' + Math.round(ansA.timeMs/1000) + 'с' : '— не ответил') + '</td>' +
+      '<td>' + (ansB ? (r.correctB ? '✓ правильный' : '✗ неправильный') + ' · ' + Math.round(ansB.timeMs/1000) + 'с' : '— не ответил') + '</td>' +
+      '<td><span class="score-cell ' + clsA + '">' + (r.scoreA||0) + '</span> : <span class="score-cell ' + clsB + '">' + (r.scoreB||0) + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function fillTeamSelects() {
+  var a = document.getElementById('teamASelect');
+  var b = document.getElementById('teamBSelect');
+  var prevA = a.value;
+  var prevB = b.value;
+  a.innerHTML = '';
+  b.innerHTML = '';
+  if (allTeams.length === 0) {
+    var o1 = document.createElement('option'); o1.textContent = '— нет команд —'; a.appendChild(o1);
+    var o2 = document.createElement('option'); o2.textContent = '— нет команд —'; b.appendChild(o2);
+    return;
+  }
+  allTeams.forEach(function(t) {
+    var oA = document.createElement('option');
+    oA.value = t.id;
+    oA.textContent = t.emoji + ' ' + t.name;
+    a.appendChild(oA);
+    var oB = document.createElement('option');
+    oB.value = t.id;
+    oB.textContent = t.emoji + ' ' + t.name;
+    b.appendChild(oB);
+  });
+  if (prevA) a.value = prevA;
+  if (prevB) b.value = prevB;
+  if (b.value === a.value && allTeams.length > 1) b.value = allTeams[1].id;
+}
+
+function addPair() {
+  var idA = document.getElementById('teamASelect').value;
+  var idB = document.getElementById('teamBSelect').value;
+  if (!idA || !idB) { alert('Выберите обе команды'); return; }
+  if (idA === idB) { alert('Команды не могут совпадать'); return; }
+  var teamA = allTeams.find(function(t) { return String(t.id) === String(idA); });
+  var teamB = allTeams.find(function(t) { return String(t.id) === String(idB); });
+  if (!teamA || !teamB) { alert('Команда не найдена'); return; }
+
+  fetch('/api/duel/schedule/add', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teamA: teamA, teamB: teamB })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() { loadAll(); });
+}
+
+function removeDuel(id) {
+  if (!confirm('Удалить дуэль №' + id + '?')) return;
+  fetch('/api/duel/schedule/remove', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  }).then(function() { loadAll(); });
+}
+
+function startDuel(id) {
+  fetch('/api/duel/start', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) alert('Ошибка: ' + res.error);
+      loadAll();
+    });
+}
+
+function finishNow() {
+  fetch('/api/duel/finish', { method: 'POST' })
+    .then(function() { loadAll(); });
+}
+
+function resetActive() {
+  fetch('/api/duel/reset-active', { method: 'POST' })
+    .then(function() { loadAll(); });
+}
+
+function clearSchedule() {
+  if (!confirm('Очистить всё расписание дуэлей? История сохранится.')) return;
+  fetch('/api/duel/schedule/clear', { method: 'POST' })
+    .then(function() { loadAll(); });
+}
+
+function openWheel() { window.open('wheel.html', '_blank'); }
+function openProjector() { window.open('duel-projector.html', '_blank'); }
+
+loadAll();
+pollTimer = setInterval(loadAll, 3000);
+</script>
+
+</body>
+</html>
