@@ -566,6 +566,5 @@ function submitStage2() {
 }
 </script>
 
-<script src="timer-widget.js"></script>`n<script src="duel-widget.js"></script>
-</body>
+<script src="timer-widget.js"></script>`n</body>
 </html>

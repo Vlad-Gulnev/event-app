@@ -92,7 +92,6 @@
       <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
       <button class="btn btn-primary" onclick="openMap()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#2e7d32;">🗺 Карта мероприятия</button>
       <button class="btn btn-primary" onclick="showAllBadges()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#b58b2a;">🏅 Все достижения</button>
-      <button class="btn btn-primary" onclick="openDuelAdmin()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#0f5d92;">⚔️ Дуэли</button>
       <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
       <button class="btn-fanfare" onclick="playTruckHorn()" style="background:linear-gradient(90deg,#5d4037,#c8102e);">🚛 Гудок камаза</button>
     </div>
@@ -362,7 +361,7 @@ function renderTour2(){
     if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
-      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 20</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
       '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
       '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
@@ -516,7 +515,7 @@ function renderSummary(){
       '<td>'+r.t1Quiz.correctK+' / 30</td>' +
       '<td>'+caseSum+' / 5</td>' +
       '<td><b>'+r.t1Total+' / 43</b></td>' +
-      '<td>'+r.t2.correct+(r.t2.duelScore ? ' <span class="badge-bonus gold">⚔️+'+r.t2.duelScore+'</span>' : '')+' / 20</td>' +
+      '<td>'+r.t2.correct+' / 8</td>' +
       '<td>'+r.t3Total+' / 13</td>' +
       '<td>'+r.t4Total+' / 58</td>' +
       '<td>'+(r.speedBonusTotal ? '<span class="badge-bonus gold">🎯 +'+r.speedBonusTotal+'</span>' : '—')+'</td>' +
@@ -555,7 +554,6 @@ function clearAll(){
   fetch('/api/admin/clear-all', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ confirm: 'YES' }) }).then(function(){ load(); });
 }
 
-function openDuelAdmin(){ window.open('duel-admin.html', '_blank'); }
 function openLeaderboard(){ window.open('leaderboard.html', '_blank'); }
 function openMap(){ window.open('map.html', '_blank'); }
 

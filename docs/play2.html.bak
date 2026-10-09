@@ -276,6 +276,5 @@ render();
 updateProgress();
 </script>
 
-<script src="duel-widget.js"></script>
 </body>
 </html>

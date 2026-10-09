@@ -232,6 +232,5 @@ loadTeam(function() {
 </script>
 
 <script src="timer-widget.js"></script>
-<script src="duel-widget.js"></script>
 </body>
 </html>

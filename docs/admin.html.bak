@@ -39,7 +39,6 @@
 .stat-line b{color:var(--primary-dark)}
 .team-avatar{font-size:22px;margin-right:6px}
 .color-badge{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.badges-inline{display:block;margin-top:4px;font-size:16px;letter-spacing:2px}
 .big-actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px}
 .btn-fanfare{background:linear-gradient(90deg,#c8102e,#b58b2a);color:#fff;font-weight:800;padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-family:inherit}
 .btn-fanfare:hover{opacity:0.9}
@@ -56,15 +55,6 @@
 .badge-bonus{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#fff3cd;color:#856404;margin-left:6px}
 .badge-bonus.gold{background:#ffe082;color:#664d03}
 .badge-quality{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#e6f4ea;color:#1f6d2f;margin-left:4px}
-.badges-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;padding:40px;overflow-y:auto}
-.badges-modal{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;padding:32px}
-.badges-modal h2{margin:0 0 20px;color:#0f5d92;font-size:26px}
-.badges-team{border:1px solid #d9dde3;border-radius:10px;padding:16px;margin:12px 0}
-.badges-team-title{font-size:20px;font-weight:700;margin-bottom:10px}
-.badges-team-title .emoji{font-size:28px}
-.badge-pill{display:inline-block;margin:4px 8px 4px 0;padding:6px 12px;background:#e6f4ea;border-radius:999px;font-size:14px}
-.badge-pill .b-icon{font-size:18px}
-.badge-pill .b-desc{color:#5a6470;font-size:12px}
 </style>
 </head>
 <body>
@@ -91,8 +81,6 @@
     <div class="big-actions">
       <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
       <button class="btn btn-primary" onclick="openMap()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#2e7d32;">🗺 Карта мероприятия</button>
-      <button class="btn btn-primary" onclick="showAllBadges()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#b58b2a;">🏅 Все достижения</button>
-      <button class="btn btn-primary" onclick="openDuelAdmin()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#0f5d92;">⚔️ Дуэли</button>
       <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
       <button class="btn-fanfare" onclick="playTruckHorn()" style="background:linear-gradient(90deg,#5d4037,#c8102e);">🚛 Гудок камаза</button>
     </div>
@@ -179,7 +167,7 @@
   <div class="tab-pane" id="tab-summary">
     <div class="card">
       <h2>Сводная таблица</h2>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">🎯 Спид — бонус за скорость. 🌟 Качество — бонусы за идеальные результаты. 🏅 Бейджи — под именем команды.</p>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">🎯 Спид — бонус за скорость (первым двум). 🌟 Качество — бонусы за идеальные результаты.</p>
       <table class="table" id="tbl">
         <thead><tr>
           <th>#</th><th>Команда</th>
@@ -254,11 +242,10 @@ function renderTeams(){
   var base = baseUrl();
   allData.teams.forEach(function(t){
     var link = base + 'menu.html?token=' + t.token + '&team=' + t.id;
-    var badges = (t.badges && t.badges.length) ? '<span class="badges-inline">' + t.badges.map(function(b){return b.icon;}).join('') + '</span>' : '';
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td>' + t.id + '</td>' +
-      '<td><span class="team-avatar">' + t.emoji + '</span><span class="color-badge" style="background:' + t.color + ';"></span><b>' + t.name + '</b>' + badges + '</td>' +
+      '<td><span class="team-avatar">' + t.emoji + '</span><span class="color-badge" style="background:' + t.color + ';"></span><b>' + t.name + '</b></td>' +
       '<td><code>' + t.token + '</code></td>' +
       '<td><a href="' + link + '" target="_blank" style="font-size:13px;word-break:break-all;">' + link + '</a></td>' +
       '<td><button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button></td>';
@@ -278,8 +265,8 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 
-function speedBadge(bonus){ if (!bonus) return '—'; return '<span class="badge-bonus gold">🎯 +' + bonus + '</span>'; }
-function qualityBadge(bonus){ if (!bonus) return '—'; return '<span class="badge-quality">🌟 +' + bonus + '</span>'; }
+function speedBadge(bonus){ if (!bonus) return ''; return '<span class="badge-bonus gold">🎯 +' + bonus + '</span>'; }
+function qualityBadge(bonus){ if (!bonus) return ''; return '<span class="badge-quality">🌟 +' + bonus + '</span>'; }
 
 function renderTour1Quiz(){
   var tbody = document.querySelector('#tour1QuizTbl tbody');
@@ -362,7 +349,7 @@ function renderTour2(){
     if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
-      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 20</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
       '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
       '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
@@ -509,30 +496,28 @@ function renderSummary(){
     var tr = document.createElement('tr');
     if (i===0 && rows.length>1 && r.grand>0) tr.className='leader';
     var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
-    var badgesHtml = (r.badges && r.badges.length) ? '<span class="badges-inline">' + r.badges.map(function(b){return b.icon;}).join('') + '</span>' : '';
     tr.innerHTML =
       '<td>'+(i+1)+'</td>' +
-      '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+badgesHtml+'</td>' +
+      '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+r.t1Quiz.correctK+' / 30</td>' +
       '<td>'+caseSum+' / 5</td>' +
       '<td><b>'+r.t1Total+' / 43</b></td>' +
-      '<td>'+r.t2.correct+(r.t2.duelScore ? ' <span class="badge-bonus gold">⚔️+'+r.t2.duelScore+'</span>' : '')+' / 20</td>' +
+      '<td>'+r.t2.correct+' / 8</td>' +
       '<td>'+r.t3Total+' / 13</td>' +
       '<td>'+r.t4Total+' / 58</td>' +
-      '<td>'+(r.speedBonusTotal ? '<span class="badge-bonus gold">🎯 +'+r.speedBonusTotal+'</span>' : '—')+'</td>' +
-      '<td>'+(r.qualityTotal ? '<span class="badge-quality">🌟 +'+r.qualityTotal+'</span>' : '—')+'</td>' +
+      '<td>'+speedBadge(r.speedBonusTotal)+'</td>' +
+      '<td>'+qualityBadge(r.qualityTotal)+'</td>' +
       '<td><b>'+r.grand+'</b></td>';
     tbody.appendChild(tr);
   });
 }
 
 function exportCSV(){
-  var rows = [['Место','Команда','Т1 квиз','Коэф','Т1 с коэф','Т1 кейс','Т1 итого','Т2','Т3','Т4','Спид-бонусы','Качество','Общий','Бейджи']];
+  var rows = [['Место','Команда','Т1 квиз','Коэф','Т1 с коэф','Т1 кейс','Т1 итого','Т2','Т3','Т4','Спид-бонусы','Качество','Общий']];
   var s = allData.teams.slice().sort(function(a,b){ return b.grand - a.grand; });
   s.forEach(function(r,i){
     var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
-    var badges = (r.badges||[]).map(function(b){return b.title;}).join(', ');
-    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.speedBonusTotal, r.qualityTotal, r.grand, badges]);
+    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.speedBonusTotal, r.qualityTotal, r.grand]);
   });
   var csv = rows.map(function(r){ return r.join(';'); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -555,37 +540,8 @@ function clearAll(){
   fetch('/api/admin/clear-all', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ confirm: 'YES' }) }).then(function(){ load(); });
 }
 
-function openDuelAdmin(){ window.open('duel-admin.html', '_blank'); }
 function openLeaderboard(){ window.open('leaderboard.html', '_blank'); }
 function openMap(){ window.open('map.html', '_blank'); }
-
-function closeBadgesModal(){
-  var m = document.getElementById('badgesModal');
-  if (m) m.remove();
-}
-
-function showAllBadges(){
-  if (!allData) return;
-  var html = '<div id="badgesModal" class="badges-modal-overlay">';
-  html += '<div class="badges-modal">';
-  html += '<h2>🏅 Достижения команд</h2>';
-  var sorted = allData.teams.slice().sort(function(a,b){ return (b.badges||[]).length - (a.badges||[]).length; });
-  sorted.forEach(function(t){
-    html += '<div class="badges-team">';
-    html += '<div class="badges-team-title"><span class="emoji">' + t.emoji + '</span> ' + t.name + '</div>';
-    if (!t.badges || !t.badges.length) {
-      html += '<p style="color:#5a6470;font-size:14px;">Пока без достижений</p>';
-    } else {
-      t.badges.forEach(function(b){
-        html += '<div class="badge-pill"><span class="b-icon">' + b.icon + '</span> ' + b.title + ' <span class="b-desc">— ' + b.desc + '</span></div>';
-      });
-    }
-    html += '</div>';
-  });
-  html += '<div style="text-align:center;margin-top:20px;"><button class="btn btn-secondary" onclick="closeBadgesModal()">Закрыть</button></div>';
-  html += '</div></div>';
-  document.body.insertAdjacentHTML('beforeend', html);
-}
 
 function startTimer(minutes){
   fetch('/api/timer/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ minutes: minutes }) }).then(function(){ updateTimerStatus(); });

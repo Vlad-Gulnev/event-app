@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дуэль — проектор</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: radial-gradient(circle at 50% 30%, #1a3a5c 0%, #0a1628 70%);
+  color: #fff;
+  overflow: hidden;
+}
+.header { padding: 14px 40px; text-align: center; border-bottom: 2px solid rgba(255,255,255,0.08); }
+.header h1 { font-size: 26px; font-weight: 800; letter-spacing: 1px;
+  background: linear-gradient(90deg, #fff, #7cc5f0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.header .sub { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; }
+
+.stage { display: grid; grid-template-columns: 1fr 380px; gap: 30px; padding: 20px 40px; height: calc(100vh - 90px); }
+
+.left-col { display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.right-col { display: flex; flex-direction: column; gap: 14px; }
+
+.pair-box { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 18px; text-align: center; }
+.pair-box .round { font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 10px; }
+.pair-box .vs-row { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+.pair-box .team { display: flex; align-items: center; gap: 10px; padding: 10px 22px; background: rgba(255,255,255,0.08); border-radius: 14px; border: 3px solid rgba(255,255,255,0.15); font-size: 24px; font-weight: 800; }
+.pair-box .team .emj { font-size: 38px; }
+.pair-box .vs { font-size: 22px; color: #ffd700; font-weight: 900; letter-spacing: 2px; }
+
+.question-box { flex: 1; background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 20px; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+.question-box h2 { font-size: 20px; color: #7cc5f0; font-weight: 800; }
+.question-box .q-text { font-size: 26px; font-weight: 700; color: #fff; line-height: 1.3; }
+.gallery { display: flex; gap: 12px; overflow-x: auto; padding: 4px 0; flex: 1; align-items: flex-start; }
+.gallery img { height: 320px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); flex-shrink: 0; }
+
+.timer-circle { background: rgba(255,255,255,0.05); border: 3px solid rgba(255,255,255,0.15); border-radius: 18px; padding: 24px; text-align: center; }
+.timer-circle .label { font-size: 12px; letter-spacing: 3px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 8px; }
+.timer-circle .value { font-size: 76px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: 4px; }
+.timer-circle.warning { border-color: #c8102e; animation: blink 0.8s infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.answers-box { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 18px; }
+.answers-box h3 { font-size: 13px; letter-spacing: 2px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 12px; }
+.team-answer { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 10px; font-size: 18px; transition: background 0.3s; }
+.team-answer.answered { background: rgba(46,125,50,0.25); border-left: 4px solid #52d681; }
+.team-answer .emj { font-size: 30px; }
+.team-answer .nm { flex: 1; font-weight: 700; }
+.team-answer .st { font-size: 15px; font-weight: 700; }
+.team-answer .st.wait { color: #ffd700; }
+.team-answer .st.done { color: #52d681; }
+
+.status-big { text-align: center; padding: 60px 20px; font-size: 28px; color: rgba(255,255,255,0.6); }
+.status-big .emoji { font-size: 80px; display: block; margin-bottom: 20px; }
+
+.final-msg { text-align: center; padding: 80px 20px; }
+.final-msg .emoji { font-size: 100px; display: block; margin-bottom: 20px; }
+.final-msg h2 { font-size: 32px; margin-bottom: 12px; }
+.final-msg p { font-size: 18px; color: rgba(255,255,255,0.6); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚔️ Дуэль</h1>
+  <div class="sub">Прямое соревнование команд</div>
+</div>
+
+<div id="stage-content" class="status-big">
+  <span class="emoji">⏳</span>
+  Ожидание запуска дуэли
+</div>
+
+<script>
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatTime(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function renderRunning(duel, q, timeLeftSec) {
+  var stage = document.getElementById('stage-content');
+  stage.className = 'stage';
+  stage.style.display = 'grid';
+
+  var answeredA = duel.answers && duel.answers.A;
+  var answeredB = duel.answers && duel.answers.B;
+
+  var galleryHtml = q.images.map(function(src) {
+    return '<img src="' + src + '" alt="">';
+  }).join('');
+
+  stage.innerHTML =
+    '<div class="left-col">' +
+      '<div class="pair-box">' +
+        '<div class="round">Дуэль №' + duel.id + ' · Вопрос №' + q.id + '</div>' +
+        '<div class="vs-row">' +
+          '<div class="team" style="border-color:' + duel.teamA.color + '"><span class="emj">' + duel.teamA.emoji + '</span>' + escapeHtml(duel.teamA.name) + '</div>' +
+          '<span class="vs">VS</span>' +
+          '<div class="team" style="border-color:' + duel.teamB.color + '"><span class="emj">' + duel.teamB.emoji + '</span>' + escapeHtml(duel.teamB.name) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="question-box">' +
+        '<h2>' + escapeHtml(q.title) + '</h2>' +
+        '<div class="q-text">' + escapeHtml(q.text) + '</div>' +
+        '<div class="gallery">' + galleryHtml + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="right-col">' +
+      '<div class="timer-circle' + (timeLeftSec <= 10 ? ' warning' : '') + '" id="timerCircle">' +
+        '<div class="label">Осталось</div>' +
+        '<div class="value" id="timerValue">' + formatTime(timeLeftSec) + '</div>' +
+      '</div>' +
+      '<div class="answers-box">' +
+        '<h3>Кто ответил</h3>' +
+        '<div class="team-answer' + (answeredA ? ' answered' : '') + '">' +
+          '<span class="emj">' + duel.teamA.emoji + '</span>' +
+          '<span class="nm">' + escapeHtml(duel.teamA.name) + '</span>' +
+          '<span class="st ' + (answeredA ? 'done' : 'wait') + '">' + (answeredA ? '✓ ответил' : '⏳ думает…') + '</span>' +
+        '</div>' +
+        '<div class="team-answer' + (answeredB ? ' answered' : '') + '">' +
+          '<span class="emj">' + duel.teamB.emoji + '</span>' +
+          '<span class="nm">' + escapeHtml(duel.teamB.name) + '</span>' +
+          '<span class="st ' + (answeredB ? 'done' : 'wait') + '">' + (answeredB ? '✓ ответил' : '⏳ думает…') + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderWaiting() {
+  var stage = document.getElementById('stage-content');
+  stage.className = 'status-big';
+  stage.style.display = 'block';
+  stage.innerHTML = '<span class="emoji">⏳</span> Ожидание запуска дуэли';
+}
+
+function renderFinished() {
+  var stage = document.getElementById('stage-content');
+  stage.className = 'final-msg';
+  stage.style.display = 'block';
+  stage.innerHTML =
+    '<span class="emoji">✓</span>' +
+    '<h2>Дуэль завершена</h2>' +
+    '<p>Результаты видны командам на их телефонах и жюри в админке.</p>' +
+    '<p style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.4);">Ведущий готовит следующую дуэль…</p>';
+}
+
+var lastRenderedDuelId = null;
+
+function poll() {
+  fetch('/api/duel/active')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.duel) { renderWaiting(); return; }
+      var duel = data.duel;
+
+      if (duel.status === 'finished') {
+        renderFinished();
+        return;
+      }
+
+      var q = data.question;
+      if (!q) { renderWaiting(); return; }
+
+      // Рисуем при смене дуэли или при первом появлении
+      if (lastRenderedDuelId !== duel.id || !document.getElementById('timerValue')) {
+        lastRenderedDuelId = duel.id;
+        renderRunning(duel, q, data.timeLeftSec);
+      } else {
+        // Обновляем только таймер и статусы без полной перерисовки
+        var tv = document.getElementById('timerValue');
+        var tc = document.getElementById('timerCircle');
+        if (tv) tv.textContent = formatTime(data.timeLeftSec);
+        if (tc) tc.classList.toggle('warning', data.timeLeftSec <= 10);
+
+        // Обновляем статусы ответов
+        var answeredA = duel.answers && duel.answers.A;
+        var answeredB = duel.answers && duel.answers.B;
+        var rows = document.querySelectorAll('.team-answer');
+        if (rows[0]) {
+          rows[0].className = 'team-answer' + (answeredA ? ' answered' : '');
+          rows[0].querySelector('.st').className = 'st ' + (answeredA ? 'done' : 'wait');
+          rows[0].querySelector('.st').textContent = answeredA ? '✓ ответил' : '⏳ думает…';
+        }
+        if (rows[1]) {
+          rows[1].className = 'team-answer' + (answeredB ? ' answered' : '');
+          rows[1].querySelector('.st').className = 'st ' + (answeredB ? 'done' : 'wait');
+          rows[1].querySelector('.st').textContent = answeredB ? '✓ ответил' : '⏳ думает…';
+        }
+      }
+    })
+    .catch(function() {});
+}
+
+poll();
+setInterval(poll, 1500);
+</script>
+
+</body>
+</html>

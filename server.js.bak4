@@ -512,11 +512,9 @@ function computeTeamStats(t, db) {
   const duelScore = (db.duelScores && db.duelScores[t.id]) || 0;
   const duelWins = (db.duel && db.duel.wins && db.duel.wins[t.id]) || 0;
 
-  const tour2Total = tour2 + tour2Bonus + quality.t2 + duelScore;
-
   const t1Total = Math.round((quizWithK + caseScore + quizBonus + quality.t1Quiz + quality.t1Case) * 100) / 100;
   const tour4 = t4s1 + t4s2 + tour4Bonus + quality.t4Objects + quality.t4Algos + quality.t4Misses;
-  const grand = Math.round((t1Total + tour2Total + tour3 + tour3Bonus + quality.t3 + tour4) * 100) / 100;
+  const grand = Math.round((t1Total + tour2 + tour2Bonus + quality.t2 + tour3 + tour3Bonus + quality.t3 + tour4 + duelScore) * 100) / 100;
 
   const stats = {
     id: t.id, name: t.name, token: t.token, caseId: t.caseId,
@@ -524,7 +522,7 @@ function computeTeamStats(t, db) {
     t1Quiz: { correct: quiz, correctK: quizWithK, coefficient: k, total: 30, bonus: quizBonus, quality: quality.t1Quiz, time: (t1.quiz && t1.quiz.time) || null },
     t1Case: { title: (t1.kase && t1.kase.caseTitle) || null, answer: (t1.kase && t1.kase.answer) || null, time: (t1.kase && t1.kase.time) || null, score: t1.caseScore || [0,0,0], quality: quality.t1Case },
     t1Total: Math.round(t1Total * 100) / 100,
-    t2: { correct: tour2, total: 20, bonus: tour2Bonus, quality: quality.t2, duelScore: duelScore, duelWins: duelWins, combinedTotal: tour2Total, time: t2.time || null },
+    t2: { correct: tour2, total: 20, bonus: tour2Bonus, quality: quality.t2, time: t2.time || null },
     t3: { formatTitle: t3.formatTitle, topicTitle: t3.topicTitle, description: t3.description, link: t3.link, fileUrl: t3.fileUrl, fileName: t3.fileName, time: t3.time, bonus: tour3Bonus, quality: quality.t3, score: t3.score || [0,0,0,0] },
     t3Total: tour3 + tour3Bonus + quality.t3,
     t4: { stage1: t4.stage1 || null, stage2: t4.stage2 || null, stage2Score: t4s2, bonus: tour4Bonus, quality: { objects: quality.t4Objects, algos: quality.t4Algos, misses: quality.t4Misses, total: quality.t4Objects + quality.t4Algos + quality.t4Misses }, time: t4.time },

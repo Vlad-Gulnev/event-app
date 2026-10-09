@@ -512,11 +512,9 @@ function computeTeamStats(t, db) {
   const duelScore = (db.duelScores && db.duelScores[t.id]) || 0;
   const duelWins = (db.duel && db.duel.wins && db.duel.wins[t.id]) || 0;
 
-  const tour2Total = tour2 + tour2Bonus + quality.t2 + duelScore;
-
   const t1Total = Math.round((quizWithK + caseScore + quizBonus + quality.t1Quiz + quality.t1Case) * 100) / 100;
   const tour4 = t4s1 + t4s2 + tour4Bonus + quality.t4Objects + quality.t4Algos + quality.t4Misses;
-  const grand = Math.round((t1Total + tour2Total + tour3 + tour3Bonus + quality.t3 + tour4) * 100) / 100;
+  const grand = Math.round((t1Total + tour2 + tour2Bonus + quality.t2 + tour3 + tour3Bonus + quality.t3 + tour4 + duelScore) * 100) / 100;
 
   const stats = {
     id: t.id, name: t.name, token: t.token, caseId: t.caseId,

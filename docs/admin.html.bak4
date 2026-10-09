@@ -362,7 +362,7 @@ function renderTour2(){
     if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
-      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 20</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
       '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
       '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
@@ -516,7 +516,7 @@ function renderSummary(){
       '<td>'+r.t1Quiz.correctK+' / 30</td>' +
       '<td>'+caseSum+' / 5</td>' +
       '<td><b>'+r.t1Total+' / 43</b></td>' +
-      '<td>'+r.t2.correct+(r.t2.duelScore ? ' <span class="badge-bonus gold">⚔️+'+r.t2.duelScore+'</span>' : '')+' / 20</td>' +
+      '<td>'+r.t2.correct+' / 8</td>' +
       '<td>'+r.t3Total+' / 13</td>' +
       '<td>'+r.t4Total+' / 58</td>' +
       '<td>'+(r.speedBonusTotal ? '<span class="badge-bonus gold">🎯 +'+r.speedBonusTotal+'</span>' : '—')+'</td>' +
