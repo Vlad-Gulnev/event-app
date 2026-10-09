@@ -42,6 +42,18 @@
 .big-actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px}
 .btn-fanfare{background:linear-gradient(90deg,#c8102e,#b58b2a);color:#fff;font-weight:800;padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-family:inherit}
 .btn-fanfare:hover{opacity:0.9}
+.timer-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px;background:#f7f9fc;border-radius:var(--radius);margin:12px 0;border:1px solid var(--border)}
+.timer-controls .label{font-weight:700;color:var(--primary-dark);margin-right:8px}
+.btn-timer{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700}
+.btn-timer:hover{background:var(--primary-dark)}
+.btn-timer-stop{background:#fdecec;color:var(--err);border:1px solid #f4c5c5}
+.btn-timer-stop:hover{background:#fbdcdc}
+.timer-status{font-size:15px;font-weight:700;margin-left:auto;color:var(--primary-dark)}
+.timer-status.active{color:#2e7d32}
+.timer-status.expired{color:#c62828;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.badge-bonus{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#fff3cd;color:#856404;margin-left:6px}
+.badge-bonus.gold{background:#ffe082;color:#664d03}
 </style>
 </head>
 <body>
@@ -68,7 +80,18 @@
     <div class="big-actions">
       <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
       <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
+      <button class="btn-fanfare" onclick="playTruckHorn()" style="background:linear-gradient(90deg,#5d4037,#c8102e);">🚛 Гудок камаза</button>
     </div>
+
+    <div class="timer-controls">
+      <span class="label">⏱ Таймер тура:</span>
+      <button class="btn-timer" onclick="startTimer(10)">10 мин</button>
+      <button class="btn-timer" onclick="startTimer(15)">15 мин</button>
+      <button class="btn-timer" onclick="startTimer(20)">20 мин</button>
+      <button class="btn-timer btn-timer-stop" onclick="stopTimer()">⏹ Стоп</button>
+      <span class="timer-status" id="timerStatus">— не активен —</span>
+    </div>
+
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="load()">Обновить</button>
       <button class="btn btn-secondary" onclick="exportCSV()">Экспорт CSV</button>
@@ -99,9 +122,9 @@
 
   <div class="tab-pane" id="tab-tour1">
     <div class="card">
-      <h2>Тур 1. Квиз <small style="color:var(--muted);font-weight:400;font-size:14px;">(с коэффициентом для слабых)</small></h2>
+      <h2>Тур 1. Квиз <small style="color:var(--muted);font-weight:400;font-size:14px;">(с коэффициентом для слабых и бонусом за скорость)</small></h2>
       <table class="table" id="tour1QuizTbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Сырой</th><th>Коэф.</th><th>С коэф.</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Сырой</th><th>Коэф.</th><th>С коэф.</th><th>Бонус</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -115,7 +138,7 @@
     <div class="card">
       <h2>Тур 2. Психологический иммунитет</h2>
       <table class="table" id="tour2Tbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Балл</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Балл</th><th>Бонус</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -172,7 +195,9 @@ function showAdmin(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminApp').style.display = '';
   load();
+  updateTimerStatus();
   setInterval(load, 5000);
+  setInterval(updateTimerStatus, 1000);
 }
 if (sessionStorage.getItem('admin_ok') === '1') { showAdmin(); }
 else { document.getElementById('passInput').addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); }); }
@@ -236,13 +261,18 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 
+function bonusBadge(bonus){
+  if (!bonus) return '';
+  return '<span class="badge-bonus gold">🎯 +' + bonus + '</span>';
+}
+
 function renderTour1Quiz(){
   var tbody = document.querySelector('#tour1QuizTbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="6">Нет команд.</td></tr>'; return; }
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="7">Нет команд.</td></tr>'; return; }
   var rows = allData.teams.map(function(t){ return {
     name: t.name, emoji: t.emoji, color: t.color,
-    raw: t.t1Quiz.correct, k: t.t1Quiz.coefficient, kd: t.t1Quiz.correctK,
+    raw: t.t1Quiz.correct, k: t.t1Quiz.coefficient, kd: t.t1Quiz.correctK, bonus: t.t1Quiz.bonus,
     time: t.t1Quiz.time, done: !!t.t1Quiz.time
   }; });
   rows.sort(function(a,b){ return b.kd - a.kd; });
@@ -257,6 +287,7 @@ function renderTour1Quiz(){
       '<td>'+(r.done ? r.raw + ' / 30' : '—')+'</td>' +
       '<td>'+(r.done ? kLabel : '—')+'</td>' +
       '<td><b>'+(r.done ? r.kd : '—')+'</b></td>' +
+      '<td>'+(r.done ? bonusBadge(r.bonus) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
   });
@@ -306,8 +337,8 @@ function saveCaseScore(teamId){
 function renderTour2(){
   var tbody = document.querySelector('#tour2Tbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="4">Нет команд.</td></tr>'; return; }
-  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, time:t.t2.time, done:!!t.t2.time }; });
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="5">Нет команд.</td></tr>'; return; }
+  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, bonus:t.t2.bonus, time:t.t2.time, done:!!t.t2.time }; });
   rows.sort(function(a,b){ return b.score - a.score; });
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
@@ -315,6 +346,7 @@ function renderTour2(){
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+      '<td>'+(r.done ? bonusBadge(r.bonus) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
   });
@@ -359,7 +391,7 @@ function showWork(){
   box.innerHTML =
     '<div class="case-block">' +
       '<div class="work-header"><div>' +
-        '<h4>' + t.emoji + ' ' + t.name + '</h4>' +
+        '<h4>' + t.emoji + ' ' + t.name + bonusBadge(t.t3.bonus) + '</h4>' +
         '<p class="work-meta">Формат: <b>' + (t.t3.formatTitle||'—') + '</b> · Тема: <b>' + (t.t3.topicTitle||'—') + '</b></p>' +
       '</div><div class="score-live" id="scoreLive_'+teamId+'">Итог: '+sum+' / 10</div></div>' +
       '<p><b>Описание:</b></p><div class="case-answer">' + ((t.t3.description||'').replace(/</g,'&lt;')) + '</div>' +
@@ -429,7 +461,7 @@ function showTour4(){
   if (!t || !t.t4 || !t.t4.stage1) { box.innerHTML='<div class="tour4-block"><p>Команда ещё не играла в Тур 4.</p></div>'; return; }
   var s1 = t.t4.stage1 || {};
   var s2 = t.t4.stage2 || {};
-  var html = '<div class="tour4-block"><h4>' + t.emoji + ' ' + t.name + '</h4>' +
+  var html = '<div class="tour4-block"><h4>' + t.emoji + ' ' + t.name + bonusBadge(t.t4.bonus) + '</h4>' +
     '<div class="stat-line"><span>Найдено объектов</span><b>'+(s1.totalFound||0)+' / 10</b></div>' +
     '<div class="stat-line"><span>Алгоритмов верно</span><b>'+(s1.algorithmsCorrect||0)+' / 6</b></div>' +
     '<div class="stat-line"><span>Промахов</span><b>'+(s1.totalMisses||0)+'</b></div>' +
@@ -441,7 +473,7 @@ function showTour4(){
     html += '<div class="stat-line"><span>'+(SIM_TITLES[key]||key)+'</span><b>'+((s2[key]&&s2[key].score)||0)+' прав.</b></div>';
   });
   html += '<div class="stat-line" style="border-top:2px solid var(--primary);margin-top:8px;padding-top:10px;"><span><b>Этап 2. Очки</b></span><b>'+(t.t4.stage2Score||0)+'</b></div></div>';
-  html += '<div class="tour4-block" style="background:#e6f4ea;"><div class="stat-line" style="font-size:18px;"><span><b>Итого за Тур 4</b></span><b>'+t.t4Total+' / 46</b></div></div>';
+  html += '<div class="tour4-block" style="background:#e6f4ea;"><div class="stat-line" style="font-size:18px;"><span><b>Итого за Тур 4</b></span><b>'+t.t4Total+' / 49</b></div></div>';
   box.innerHTML = html;
 }
 
@@ -464,21 +496,21 @@ function renderSummary(){
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+r.t1Quiz.correctK+' / 45</td>' +
       '<td>'+caseSum+' / 5</td>' +
-      '<td><b>'+r.t1Total+' / 50</b></td>' +
+      '<td><b>'+r.t1Total+' / 53</b></td>' +
       '<td>'+r.t2.correct+' / 8</td>' +
       '<td>'+r.t3Total+' / 10</td>' +
-      '<td>'+r.t4Total+' / 46</td>' +
-      '<td><b>'+r.grand+' / 114</b></td>';
+      '<td>'+r.t4Total+' / 49</td>' +
+      '<td><b>'+r.grand+' / 120</b></td>';
     tbody.appendChild(tr);
   });
 }
 
 function exportCSV(){
-  var rows = [['Место','Команда','Т1 квиз сырой','Коэф','Т1 квиз с коэф','Т1 кейс','Т1 итого','Т2','Т3','Т4','Общий']];
+  var rows = [['Место','Команда','Т1 квиз сырой','Коэф','Т1 квиз с коэф','Бонус Т1','Т1 кейс','Т1 итого','Т2','Бонус Т2','Т3','Бонус Т3','Т4','Бонус Т4','Общий']];
   var s = allData.teams.slice().sort(function(a,b){ return b.grand - a.grand; });
   s.forEach(function(r,i){
     var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
-    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.grand]);
+    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, r.t1Quiz.bonus, caseSum, r.t1Total, r.t2.correct, r.t2.bonus, r.t3Total, r.t3.bonus, r.t4Total, r.t4.bonus, r.grand]);
   });
   var csv = rows.map(function(r){ return r.join(';'); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -507,30 +539,101 @@ function clearAll(){
   }).then(function(){ load(); });
 }
 
-// ==== ЛИДЕРБОРД ====
 function openLeaderboard(){
   window.open('leaderboard.html', '_blank');
 }
 
-// ==== ФАНФАРА ====
+// ==== ТАЙМЕР ====
+function startTimer(minutes){
+  fetch('/api/timer/start', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ minutes: minutes })
+  }).then(function(){ updateTimerStatus(); });
+}
+
+function stopTimer(){
+  fetch('/api/timer/stop', { method:'POST' }).then(function(){ updateTimerStatus(); });
+}
+
+function updateTimerStatus(){
+  fetch('/api/timer/state')
+    .then(function(r){ return r.json(); })
+    .then(function(t){
+      var el = document.getElementById('timerStatus');
+      if (!t.active && !t.expired) {
+        el.className = 'timer-status';
+        el.textContent = '— не активен —';
+        return;
+      }
+      if (t.expired) {
+        el.className = 'timer-status expired';
+        el.textContent = '⏰ ВРЕМЯ ВЫШЛО';
+        return;
+      }
+      var mm = (t.minutesLeft < 10 ? '0' : '') + t.minutesLeft;
+      var ss = (t.secondsLeft < 10 ? '0' : '') + t.secondsLeft;
+      el.className = 'timer-status active';
+      el.textContent = '⏱ ' + mm + ':' + ss + ' из ' + t.totalMinutes + ' мин';
+    })
+    .catch(function(){});
+}
+
+// ==== ЗВУК ====
 var audioCtx = null;
+function initAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  return audioCtx;
+}
+
 function playFanfare(){
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    initAudio();
     var notes = [523, 659, 784, 1047, 1319];
     notes.forEach(function(freq, i){
       setTimeout(function(){
-        var o = audioCtx.createOscillator();
-        var g = audioCtx.createGain();
-        o.type = 'sine';
-        o.frequency.value = freq;
+        var o = audioCtx.createOscillator(); var g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
         g.gain.setValueAtTime(0.25, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + 0.5);
       }, i * 130);
     });
-  } catch (e) { alert('Звук недоступен в этом браузере.'); }
+  } catch (e) { alert('Звук недоступен.'); }
+}
+
+function playTruckHorn(){
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    var now = audioCtx.currentTime;
+    var dur = 2.2;
+    var o1 = audioCtx.createOscillator(); var g1 = audioCtx.createGain();
+    o1.type = 'sawtooth';
+    o1.frequency.setValueAtTime(95, now);
+    o1.frequency.linearRampToValueAtTime(105, now + 0.1);
+    o1.frequency.linearRampToValueAtTime(98, now + dur);
+    g1.gain.setValueAtTime(0.0001, now);
+    g1.gain.linearRampToValueAtTime(0.4, now + 0.05);
+    g1.gain.setValueAtTime(0.4, now + dur - 0.2);
+    g1.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o1.connect(g1); g1.connect(audioCtx.destination);
+    o1.start(now); o1.stop(now + dur);
+
+    var o2 = audioCtx.createOscillator(); var g2 = audioCtx.createGain();
+    o2.type = 'sawtooth';
+    o2.frequency.setValueAtTime(142, now);
+    o2.frequency.linearRampToValueAtTime(158, now + 0.1);
+    o2.frequency.linearRampToValueAtTime(147, now + dur);
+    g2.gain.setValueAtTime(0.0001, now);
+    g2.gain.linearRampToValueAtTime(0.3, now + 0.05);
+    g2.gain.setValueAtTime(0.3, now + dur - 0.2);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o2.connect(g2); g2.connect(audioCtx.destination);
+    o2.start(now); o2.stop(now + dur);
+
+    if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 600]);
+  } catch (e) { alert('Звук недоступен.'); }
 }
 </script>
 
