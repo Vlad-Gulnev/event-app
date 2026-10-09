@@ -1,44 +1,48 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Админка чемпионата</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    .login-wrap{max-width:420px;margin:80px auto;padding:32px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);text-align:center}
-    .login-wrap h1{font-size:22px;margin-bottom:8px}
-    .login-wrap p{color:var(--muted);font-size:14px;margin-bottom:20px}
-    .login-wrap input{width:100%;padding:12px 14px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius);box-sizing:border-box;margin-bottom:12px}
-    .login-err{color:var(--err);font-size:14px;margin-top:10px}
-    .copy-btn{padding:4px 10px;font-size:13px;background:#eef1f5;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:inherit}
-    .copy-btn:hover{background:#e2e7ee}
-    .case-answer{background:#f7f9fc;border-left:4px solid var(--primary);padding:12px 16px;border-radius:6px;margin:8px 0;white-space:pre-wrap;font-size:15px}
-    .case-block{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 0;background:#fff}
-    .case-block h4{margin:0 0 8px;color:var(--primary-dark)}
-    .score-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:10px 0}
-    .score-row input{width:60px;margin:0;padding:6px}
-    .criteria-list{font-size:13px;color:var(--muted);margin:6px 0 12px}
-    .tab-bar{display:flex;gap:6px;margin:12px 0 16px;flex-wrap:wrap}
-    .tab-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-family:inherit;font-size:14px}
-    .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .tab-pane{display:none}
-    .tab-pane.active{display:block}
-    .work-preview{background:#f7f9fc;padding:16px;border-radius:var(--radius);border:1px solid var(--border);text-align:center;margin-bottom:14px}
-    .work-preview img{max-width:100%;max-height:500px;border-radius:8px}
-    .work-preview video{max-width:100%;max-height:500px;border-radius:8px}
-    .work-preview iframe{width:100%;height:500px;border-radius:8px;border:1px solid var(--border)}
-    .work-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-    .work-header h4{margin:0;font-size:18px}
-    .work-meta{font-size:13px;color:var(--muted)}
-    .nav-buttons{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-    .score-live{font-size:15px;font-weight:700;color:var(--primary-dark)}
-    .tour4-block{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 0;background:#fff}
-    .tour4-block h4{margin:0 0 10px;color:var(--primary-dark);font-size:16px}
-    .stat-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);font-size:14px}
-    .stat-line:last-child{border-bottom:none}
-    .stat-line b{color:var(--primary-dark)}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Админка чемпионата</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.login-wrap{max-width:420px;margin:80px auto;padding:32px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);text-align:center}
+.login-wrap h1{font-size:22px;margin-bottom:8px}
+.login-wrap p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.login-wrap input{width:100%;padding:12px 14px;font-size:16px;border:1px solid var(--border);border-radius:var(--radius);box-sizing:border-box;margin-bottom:12px}
+.login-err{color:var(--err);font-size:14px;margin-top:10px}
+.copy-btn{padding:4px 10px;font-size:13px;background:#eef1f5;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#e2e7ee}
+.case-answer{background:#f7f9fc;border-left:4px solid var(--primary);padding:12px 16px;border-radius:6px;margin:8px 0;white-space:pre-wrap;font-size:15px}
+.case-block{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 0;background:#fff}
+.case-block h4{margin:0 0 8px;color:var(--primary-dark)}
+.score-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.score-row input{width:60px;margin:0;padding:6px}
+.criteria-list{font-size:13px;color:var(--muted);margin:6px 0 12px}
+.tab-bar{display:flex;gap:6px;margin:12px 0 16px;flex-wrap:wrap}
+.tab-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-family:inherit;font-size:14px}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.work-preview{background:#f7f9fc;padding:16px;border-radius:var(--radius);border:1px solid var(--border);text-align:center;margin-bottom:14px}
+.work-preview img{max-width:100%;max-height:500px;border-radius:8px}
+.work-preview video{max-width:100%;max-height:500px;border-radius:8px}
+.work-preview iframe{width:100%;height:500px;border-radius:8px;border:1px solid var(--border)}
+.work-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.work-header h4{margin:0;font-size:18px}
+.work-meta{font-size:13px;color:var(--muted)}
+.nav-buttons{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.score-live{font-size:15px;font-weight:700;color:var(--primary-dark)}
+.tour4-block{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 0;background:#fff}
+.tour4-block h4{margin:0 0 10px;color:var(--primary-dark);font-size:16px}
+.stat-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);font-size:14px}
+.stat-line:last-child{border-bottom:none}
+.stat-line b{color:var(--primary-dark)}
+.team-avatar{font-size:22px;margin-right:6px}
+.color-badge{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.big-actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px}
+.btn-fanfare{background:linear-gradient(90deg,#c8102e,#b58b2a);color:#fff;font-weight:800;padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-family:inherit}
+.btn-fanfare:hover{opacity:0.9}
+</style>
 </head>
 <body>
 
@@ -60,12 +64,16 @@
 
 <main class="container wide">
   <div class="card">
-    <p style="color:var(--muted);font-size:14px;">Данные хранятся на сервере. Обновление каждые 5 секунд.</p>
+    <p style="color:var(--muted);font-size:14px;">Данные на сервере. Обновление каждые 5 секунд.</p>
+    <div class="big-actions">
+      <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
+      <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
+    </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="load()">Обновить</button>
       <button class="btn btn-secondary" onclick="exportCSV()">Экспорт CSV</button>
       <button class="btn btn-secondary" onclick="resetTour()">Сбросить тур</button>
-      <button class="btn btn-danger" onclick="clearAll()">Полная очистка данных</button>
+      <button class="btn btn-danger" onclick="clearAll()">Полная очистка</button>
       <button class="btn btn-secondary" onclick="logout()">Выйти</button>
     </div>
   </div>
@@ -91,15 +99,14 @@
 
   <div class="tab-pane" id="tab-tour1">
     <div class="card">
-      <h2>Тур 1. Квиз</h2>
+      <h2>Тур 1. Квиз <small style="color:var(--muted);font-weight:400;font-size:14px;">(с коэффициентом для слабых)</small></h2>
       <table class="table" id="tour1QuizTbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Балл квиза</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Сырой</th><th>Коэф.</th><th>С коэф.</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
     <div class="card">
       <h2>Тур 1. Ситуационные кейсы</h2>
-      <p style="color:var(--muted);font-size:14px;">Критерии: 2 + 2 + 1 = 5 баллов максимум.</p>
       <div id="casesBox">Загрузка...</div>
     </div>
   </div>
@@ -126,7 +133,6 @@
   <div class="tab-pane" id="tab-tour4">
     <div class="card">
       <h2>Тур 4. Найди опасность</h2>
-      <p style="color:var(--muted);font-size:14px;">Этап 1 — игра (очки за объекты, алгоритмы, скорость). Этап 2 — симулятор (по 1 баллу за правильное решение).</p>
       <label for="tour4Select"><b>Команда:</b></label>
       <select id="tour4Select" onchange="showTour4()" style="max-width:400px;margin-bottom:12px;"></select>
       <div id="tour4Preview">Загрузка...</div>
@@ -137,13 +143,11 @@
     <div class="card">
       <h2>Сводная таблица</h2>
       <table class="table" id="tbl">
-        <thead>
-          <tr>
-            <th>#</th><th>Команда</th>
-            <th>Т1 квиз</th><th>Т1 кейс</th><th>Т1 итого</th>
-            <th>Т2</th><th>Т3</th><th>Т4</th><th>Общий</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>#</th><th>Команда</th>
+          <th>Т1 квиз</th><th>Т1 кейс</th><th>Т1 итого</th>
+          <th>Т2</th><th>Т3</th><th>Т4</th><th>Общий</th>
+        </tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -160,12 +164,8 @@ var PASS_HASH = simpleHash(SALT + 'KBU3');
 
 function tryLogin(){
   var input = document.getElementById('passInput').value;
-  if (simpleHash(SALT + input) === PASS_HASH) {
-    sessionStorage.setItem('admin_ok','1');
-    showAdmin();
-  } else {
-    document.getElementById('loginErr').textContent = 'Неверный пароль';
-  }
+  if (simpleHash(SALT + input) === PASS_HASH) { sessionStorage.setItem('admin_ok','1'); showAdmin(); }
+  else { document.getElementById('loginErr').textContent = 'Неверный пароль'; }
 }
 function logout(){ sessionStorage.removeItem('admin_ok'); location.reload(); }
 function showAdmin(){
@@ -185,7 +185,7 @@ function switchTab(tabId, btn){
 }
 
 var CASES_META = { 1:'Переписка в мессенджере', 2:'Пост в соцсети', 3:'Подозрительный предмет', 4:'Лёгкий заработок' };
-var SIM_TITLES = { tg:'Ситуация 1. Странное сообщение', bag:'Ситуация 2. Бесхозная сумка', friend:'Ситуация 3. Друг втягивается' };
+var SIM_TITLES = { tg:'Странное сообщение', bag:'Бесхозная сумка', friend:'Друг втягивается' };
 var allData = null;
 
 function baseUrl(){ var loc=window.location; return loc.origin + loc.pathname.replace(/\/[^\/]*$/,'/'); }
@@ -216,7 +216,7 @@ function renderTeams(){
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td>' + t.id + '</td>' +
-      '<td><b>' + t.name + '</b></td>' +
+      '<td><span class="team-avatar">' + t.emoji + '</span><span class="color-badge" style="background:' + t.color + ';"></span><b>' + t.name + '</b></td>' +
       '<td><code>' + t.token + '</code></td>' +
       '<td><a href="' + link + '" target="_blank" style="font-size:13px;word-break:break-all;">' + link + '</a></td>' +
       '<td><button class="copy-btn" onclick="copyLink(\'' + link + '\')">Копировать</button></td>';
@@ -239,14 +239,24 @@ function fallbackCopy(text){
 function renderTour1Quiz(){
   var tbody = document.querySelector('#tour1QuizTbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="4">Нет команд.</td></tr>'; return; }
-  var rows = allData.teams.map(function(t){ return { name: t.name, score: t.t1Quiz.correct, time: t.t1Quiz.time, done: t.t1Quiz.total && t.t1Quiz.correct !== undefined && t.t1Quiz.time }; });
-  rows.sort(function(a,b){ return b.score - a.score; });
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="6">Нет команд.</td></tr>'; return; }
+  var rows = allData.teams.map(function(t){ return {
+    name: t.name, emoji: t.emoji, color: t.color,
+    raw: t.t1Quiz.correct, k: t.t1Quiz.coefficient, kd: t.t1Quiz.correctK,
+    time: t.t1Quiz.time, done: !!t.t1Quiz.time
+  }; });
+  rows.sort(function(a,b){ return b.kd - a.kd; });
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
-    if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
-    tr.innerHTML = '<td>'+(i+1)+'</td><td>'+r.name+'</td>' +
-      '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 30</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
+    if (i===0 && rows.length>1 && r.kd>0) tr.className='leader';
+    var kLabel = r.k === 1 ? '<span class="badge">×1.0</span>' :
+                 r.k === 1.25 ? '<span class="badge ok">×1.25</span>' :
+                 '<span class="badge" style="background:#fff3cd;color:#856404;">×1.5</span>';
+    tr.innerHTML = '<td>'+(i+1)+'</td>' +
+      '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
+      '<td>'+(r.done ? r.raw + ' / 30' : '—')+'</td>' +
+      '<td>'+(r.done ? kLabel : '—')+'</td>' +
+      '<td><b>'+(r.done ? r.kd : '—')+'</b></td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
   });
@@ -259,19 +269,18 @@ function renderCases(){
   allData.teams.forEach(function(t){
     var parts = t.t1Case.score || [0,0,0];
     var html = '<div class="case-block">' +
-      '<h4>Команда: ' + t.name + '</h4>' +
+      '<h4>' + t.emoji + ' ' + t.name + '</h4>' +
       '<p><b>Кейс:</b> ' + (t.t1Case.title || CASES_META[t.caseId] || '—') + '</p>';
     if (t.t1Case.answer) {
-      html += '<p><b>Ответ:</b></p><div class="case-answer">' + t.t1Case.answer.replace(/</g,'&lt;') + '</div>' +
-        '<p style="color:var(--muted);font-size:13px;">Отправлено: ' + new Date(t.t1Case.time).toLocaleString('ru-RU') + '</p>';
+      html += '<p><b>Ответ:</b></p><div class="case-answer">' + t.t1Case.answer.replace(/</g,'&lt;') + '</div>';
     } else {
       html += '<p style="color:var(--muted);">Команда ещё не отправила ответ.</p>';
     }
     html += '<p class="criteria-list"><b>Критерии:</b> 1) Замечена опасность 0–2; 2) Названы признаки 0–2; 3) Правильные действия 0–1</p>' +
       '<div class="score-row">' +
-      '<label>Крит.1: <input type="number" min="0" max="2" id="c1_'+t.id+'" value="'+(parts[0]||0)+'"></label>' +
-      '<label>Крит.2: <input type="number" min="0" max="2" id="c2_'+t.id+'" value="'+(parts[1]||0)+'"></label>' +
-      '<label>Крит.3: <input type="number" min="0" max="1" id="c3_'+t.id+'" value="'+(parts[2]||0)+'"></label>' +
+      '<label>1: <input type="number" min="0" max="2" id="c1_'+t.id+'" value="'+(parts[0]||0)+'"></label>' +
+      '<label>2: <input type="number" min="0" max="2" id="c2_'+t.id+'" value="'+(parts[1]||0)+'"></label>' +
+      '<label>3: <input type="number" min="0" max="1" id="c3_'+t.id+'" value="'+(parts[2]||0)+'"></label>' +
       '<button class="btn btn-primary" onclick="saveCaseScore('+t.id+')">Сохранить</button>' +
       '<span id="saved_'+t.id+'" style="color:var(--ok);font-weight:600;"></span>' +
       '</div></div>';
@@ -286,7 +295,7 @@ function saveCaseScore(teamId){
   fetch('/api/admin/tour1/case-score', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ teamId: teamId, scores: [c1, c2, c3] })
-  }).then(function(){ 
+  }).then(function(){
     var lbl = document.getElementById('saved_'+teamId);
     lbl.textContent = 'Сохранено: ' + (c1+c2+c3) + ' / 5';
     setTimeout(function(){ lbl.textContent=''; }, 3000);
@@ -298,12 +307,13 @@ function renderTour2(){
   var tbody = document.querySelector('#tour2Tbl tbody');
   tbody.innerHTML = '';
   if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="4">Нет команд.</td></tr>'; return; }
-  var rows = allData.teams.map(function(t){ return { name:t.name, score:t.t2.correct, time:t.t2.time, done:!!t.t2.time }; });
+  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, time:t.t2.time, done:!!t.t2.time }; });
   rows.sort(function(a,b){ return b.score - a.score; });
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
     if (i===0 && rows.length>1 && r.score>0) tr.className='leader';
-    tr.innerHTML = '<td>'+(i+1)+'</td><td>'+r.name+'</td>' +
+    tr.innerHTML = '<td>'+(i+1)+'</td>' +
+      '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
@@ -319,7 +329,7 @@ function fillTour3Select(){
     var has = t.t3 && t.t3.time;
     var opt = document.createElement('option');
     opt.value = t.id;
-    opt.textContent = t.name + (has ? ' ✓' : ' — нет работы');
+    opt.textContent = t.emoji + ' ' + t.name + (has ? ' ✓' : ' — нет работы');
     sel.appendChild(opt);
   });
   if (prev) sel.value = prev;
@@ -335,32 +345,31 @@ function showWork(){
   var previewHtml = '';
   if (t.t3.fileUrl) {
     var ext = (t.t3.fileUrl.split('.').pop()||'').toLowerCase();
-    if (['jpg','jpeg','png','webp','gif'].indexOf(ext)!==-1) previewHtml = '<img src="'+t.t3.fileUrl+'" alt="work">';
-    else if (ext==='mp4'||ext==='webm') previewHtml = '<video src="'+t.t3.fileUrl+'" controls></video>';
-    else if (ext==='pdf') previewHtml = '<iframe src="'+t.t3.fileUrl+'"></iframe>';
-    else previewHtml = '<p><a href="'+t.t3.fileUrl+'" target="_blank">'+t.t3.fileUrl+'</a></p>';
+    if (['jpg','jpeg','png','webp','gif'].indexOf(ext)!==-1) previewHtml = '<img src="' + t.t3.fileUrl + '" alt="work">';
+    else if (ext==='mp4'||ext==='webm') previewHtml = '<video src="' + t.t3.fileUrl + '" controls></video>';
+    else if (ext==='pdf') previewHtml = '<iframe src="' + t.t3.fileUrl + '"></iframe>';
+    else previewHtml = '<p><a href="' + t.t3.fileUrl + '" target="_blank">' + t.t3.fileUrl + '</a></p>';
   } else if (t.t3.link) {
     var link = t.t3.link;
-    if (/t\.me|vk\.com|youtube\.com|youtu\.be/i.test(link)) previewHtml = '<iframe src="'+link+'" allowfullscreen></iframe><p style="margin-top:10px;"><a href="'+link+'" target="_blank">Открыть →</a></p>';
-    else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(link)) previewHtml = '<img src="'+link+'">';
-    else previewHtml = '<p><a href="'+link+'" target="_blank">'+link+'</a></p>';
+    if (/t\.me|vk\.com|youtube\.com|youtu\.be/i.test(link)) previewHtml = '<iframe src="' + link + '" allowfullscreen></iframe><p style="margin-top:10px;"><a href="' + link + '" target="_blank">Открыть →</a></p>';
+    else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(link)) previewHtml = '<img src="' + link + '">';
+    else previewHtml = '<p><a href="' + link + '" target="_blank">' + link + '</a></p>';
   }
   var sum = scores.reduce(function(a,b){ return a + (Number(b)||0); }, 0);
   box.innerHTML =
     '<div class="case-block">' +
       '<div class="work-header"><div>' +
-        '<h4>'+t.name+'</h4>' +
-        '<p class="work-meta">Формат: <b>'+(t.t3.formatTitle||'—')+'</b> · Тема: <b>'+(t.t3.topicTitle||'—')+'</b></p>' +
-        '<p class="work-meta">Загружено: '+(t.t3.time ? new Date(t.t3.time).toLocaleString('ru-RU') : '')+'</p>' +
+        '<h4>' + t.emoji + ' ' + t.name + '</h4>' +
+        '<p class="work-meta">Формат: <b>' + (t.t3.formatTitle||'—') + '</b> · Тема: <b>' + (t.t3.topicTitle||'—') + '</b></p>' +
       '</div><div class="score-live" id="scoreLive_'+teamId+'">Итог: '+sum+' / 10</div></div>' +
-      '<p><b>Описание:</b></p><div class="case-answer">'+((t.t3.description||'').replace(/</g,'&lt;'))+'</div>' +
-      '<p style="margin-top:14px;"><b>Работа:</b></p><div class="work-preview">'+previewHtml+'</div>' +
+      '<p><b>Описание:</b></p><div class="case-answer">' + ((t.t3.description||'').replace(/</g,'&lt;')) + '</div>' +
+      '<p style="margin-top:14px;"><b>Работа:</b></p><div class="work-preview">' + previewHtml + '</div>' +
       '<p class="criteria-list"><b>Критерии:</b> 1) Понятность 0–3; 2) Точность 0–3; 3) Оригинальность 0–3; 4) Соответствие 0–1</p>' +
       '<div class="score-row">' +
-        '<label>Понятность: <input type="number" min="0" max="3" id="w1_'+teamId+'" value="'+(scores[0]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
-        '<label>Точность: <input type="number" min="0" max="3" id="w2_'+teamId+'" value="'+(scores[1]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
-        '<label>Оригинальность: <input type="number" min="0" max="3" id="w3_'+teamId+'" value="'+(scores[2]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
-        '<label>Соответствие: <input type="number" min="0" max="1" id="w4_'+teamId+'" value="'+(scores[3]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
+        '<label>1: <input type="number" min="0" max="3" id="w1_'+teamId+'" value="'+(scores[0]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
+        '<label>2: <input type="number" min="0" max="3" id="w2_'+teamId+'" value="'+(scores[1]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
+        '<label>3: <input type="number" min="0" max="3" id="w3_'+teamId+'" value="'+(scores[2]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
+        '<label>4: <input type="number" min="0" max="1" id="w4_'+teamId+'" value="'+(scores[3]||0)+'" oninput="updateWorkSum('+teamId+')"></label>' +
       '</div>' +
       '<div class="nav-buttons">' +
         '<button class="btn btn-primary" onclick="saveWorkScore('+teamId+')">Сохранить оценку</button>' +
@@ -406,7 +415,7 @@ function fillTour4Select(){
     var has = t.t4 && t.t4.stage1;
     var opt = document.createElement('option');
     opt.value = t.id;
-    opt.textContent = t.name + (has ? ' ✓' : ' — не играл');
+    opt.textContent = t.emoji + ' ' + t.name + (has ? ' ✓' : ' — не играл');
     sel.appendChild(opt);
   });
   if (prev) sel.value = prev;
@@ -420,11 +429,11 @@ function showTour4(){
   if (!t || !t.t4 || !t.t4.stage1) { box.innerHTML='<div class="tour4-block"><p>Команда ещё не играла в Тур 4.</p></div>'; return; }
   var s1 = t.t4.stage1 || {};
   var s2 = t.t4.stage2 || {};
-  var html = '<div class="tour4-block"><h4>Команда: '+t.name+'</h4>' +
-    '<div class="stat-line"><span>Этап 1. Найдено объектов</span><b>'+(s1.totalFound||0)+' / 10</b></div>' +
-    '<div class="stat-line"><span>Этап 1. Алгоритмов верно</span><b>'+(s1.algorithmsCorrect||0)+' / 6</b></div>' +
-    '<div class="stat-line"><span>Этап 1. Промахов</span><b>'+(s1.totalMisses||0)+'</b></div>' +
-    '<div class="stat-line"><span>Этап 1. Время игры</span><b>'+formatTime(s1.duration||0)+'</b></div>' +
+  var html = '<div class="tour4-block"><h4>' + t.emoji + ' ' + t.name + '</h4>' +
+    '<div class="stat-line"><span>Найдено объектов</span><b>'+(s1.totalFound||0)+' / 10</b></div>' +
+    '<div class="stat-line"><span>Алгоритмов верно</span><b>'+(s1.algorithmsCorrect||0)+' / 6</b></div>' +
+    '<div class="stat-line"><span>Промахов</span><b>'+(s1.totalMisses||0)+'</b></div>' +
+    '<div class="stat-line"><span>Время игры</span><b>'+formatTime(s1.duration||0)+'</b></div>' +
     '<div class="stat-line"><span><b>Этап 1. Очки</b></span><b>'+(s1.score||0)+'</b></div></div>';
   html += '<div class="tour4-block"><h4>Этап 2. Симулятор</h4>';
   if (!Object.keys(s2).length) html += '<p style="color:var(--muted);">Этап 2 не пройден.</p>';
@@ -449,25 +458,27 @@ function renderSummary(){
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
     if (i===0 && rows.length>1 && r.grand>0) tr.className='leader';
+    var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
     tr.innerHTML =
-      '<td>'+(i+1)+'</td><td>'+r.name+'</td>' +
-      '<td>'+r.t1Quiz.correct+' / 30</td>' +
-      '<td>'+((r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0))+' / 5</td>' +
-      '<td><b>'+r.t1Total+' / 35</b></td>' +
+      '<td>'+(i+1)+'</td>' +
+      '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
+      '<td>'+r.t1Quiz.correctK+' / 45</td>' +
+      '<td>'+caseSum+' / 5</td>' +
+      '<td><b>'+r.t1Total+' / 50</b></td>' +
       '<td>'+r.t2.correct+' / 8</td>' +
       '<td>'+r.t3Total+' / 10</td>' +
       '<td>'+r.t4Total+' / 46</td>' +
-      '<td><b>'+r.grand+' / 99</b></td>';
+      '<td><b>'+r.grand+' / 114</b></td>';
     tbody.appendChild(tr);
   });
 }
 
 function exportCSV(){
-  var rows = [['Место','Команда','Т1 квиз (30)','Т1 кейс (5)','Т1 итого (35)','Т2 (8)','Т3 (10)','Т4 (46)','Общий (99)']];
+  var rows = [['Место','Команда','Т1 квиз сырой','Коэф','Т1 квиз с коэф','Т1 кейс','Т1 итого','Т2','Т3','Т4','Общий']];
   var s = allData.teams.slice().sort(function(a,b){ return b.grand - a.grand; });
   s.forEach(function(r,i){
     var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
-    rows.push([i+1, r.name, r.t1Quiz.correct, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.grand]);
+    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.grand]);
   });
   var csv = rows.map(function(r){ return r.join(';'); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -488,12 +499,38 @@ function resetTour(){
 }
 
 function clearAll(){
-  if (!confirm('Удалить ВСЕ данные (команды, ответы, работы)? Это нельзя отменить.')) return;
+  if (!confirm('Удалить ВСЕ данные? Это нельзя отменить.')) return;
   if (!confirm('Точно? Это крайнее действие.')) return;
   fetch('/api/admin/clear-all', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ confirm: 'YES' })
   }).then(function(){ load(); });
+}
+
+// ==== ЛИДЕРБОРД ====
+function openLeaderboard(){
+  window.open('leaderboard.html', '_blank');
+}
+
+// ==== ФАНФАРА ====
+var audioCtx = null;
+function playFanfare(){
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var notes = [523, 659, 784, 1047, 1319];
+    notes.forEach(function(freq, i){
+      setTimeout(function(){
+        var o = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + 0.5);
+      }, i * 130);
+    });
+  } catch (e) { alert('Звук недоступен в этом браузере.'); }
 }
 </script>
 
