@@ -1,5 +1,5 @@
-// Виджет дуэлей — всплывает поверх любой страницы команды.
-// Подключается одной строкой: <script src="duel-widget.js"></script>
+// Виджет дуэлей — только вопрос и варианты ответа, БЕЗ картинок.
+// Команды смотрят картинки на проекторе.
 
 (function() {
   'use strict';
@@ -11,8 +11,8 @@
 
   var overlay = null;
   var team = null;
-  var shownQuestionFor = null;   // ID дуэли, для которой показан вопрос
-  var shownResultFor = null;     // ID дуэли, для которой показан результат
+  var shownQuestionFor = null;
+  var shownResultFor = null;
   var myAnswer = null;
   var submitted = false;
 
@@ -36,10 +36,10 @@
     var s = document.createElement('style');
     s.id = 'dwStyles';
     s.textContent =
-      '.dw-opt{display:block;padding:12px 14px;margin:6px 0;border:2px solid rgba(255,255,255,0.15);border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.04);color:#fff;font-size:15px;transition:all 0.15s;}' +
+      '.dw-opt{display:block;padding:14px 16px;margin:8px 0;border:2px solid rgba(255,255,255,0.15);border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.04);color:#fff;font-size:16px;transition:all 0.15s;}' +
       '.dw-opt:hover{background:rgba(255,255,255,0.1);}' +
       '.dw-opt.checked{background:rgba(21,127,196,0.3);border-color:#157fc4;}' +
-      '.dw-opt input{margin-right:10px;}' +
+      '.dw-opt input{margin-right:10px;transform:scale(1.2);}' +
       '.dw-timer-warning{color:#ff6b6b !important;animation:dwBlink 0.8s infinite;}' +
       '@keyframes dwBlink{0%,100%{opacity:1}50%{opacity:0.4}}';
     document.head.appendChild(s);
@@ -65,10 +65,6 @@
     var myTeam = isA ? duel.teamA : duel.teamB;
     var oppTeam = isA ? duel.teamB : duel.teamA;
     var oppAnswered = isA ? (duel.answers && duel.answers.B) : (duel.answers && duel.answers.A);
-
-    var galleryHtml = q.images.map(function(src) {
-      return '<img src="' + src + '" alt="" style="height:280px;border-radius:10px;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.5);">';
-    }).join('');
 
     var optionsHtml = q.options.map(function(opt, j) {
       var inputType = q.multiple ? 'checkbox' : 'radio';
@@ -97,13 +93,12 @@
 
         '<div style="background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.1);border-radius:14px;padding:18px;margin-bottom:14px;">' +
           '<h2 style="font-size:17px;color:#7cc5f0;margin:0 0 10px;">' + esc(q.title) + '</h2>' +
-          '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;">' + galleryHtml + '</div>' +
-          '<div style="font-size:18px;font-weight:700;margin:10px 0;">' + esc(q.text) + '</div>' +
+          '<div style="font-size:18px;font-weight:700;margin:10px 0 16px;">' + esc(q.text) + '</div>' +
           '<div id="dwOptions">' + optionsHtml + '</div>' +
           '<button id="dwSubmitBtn" onclick="window.__dwSubmit()" style="width:100%;padding:16px;font-size:17px;font-weight:700;background:#157fc4;color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;margin-top:12px;" ' + (submitted ? 'disabled' : '') + '>' + (submitted ? '✓ Ответ отправлен' : 'Отправить ответ') + '</button>' +
         '</div>' +
 
-        '<div style="text-align:center;font-size:14px;color:rgba(255,255,255,0.5);">Отвечайте быстрее — за скорость дают больше баллов!</div>' +
+        '<div style="text-align:center;font-size:14px;color:rgba(255,255,255,0.5);">📺 Картинки смотрите на проекторе — а здесь выбирайте ответ</div>' +
       '</div>';
   }
 
@@ -153,9 +148,7 @@
       });
   };
 
-  window.__dwClose = function() {
-    hide();
-  };
+  window.__dwClose = function() { hide(); };
 
   function renderFinished(duel) {
     if (!team) return;
@@ -193,13 +186,11 @@
     fetch('/api/duel/active')
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        // Нет дуэли или не наша
         if (!data.duel) { hide(); resetState(); return; }
         var duel = data.duel;
         var isMy = (String(team.id) === String(duel.teamA.id) || String(team.id) === String(duel.teamB.id));
         if (!isMy) { hide(); resetState(); return; }
 
-        // Дуэль завершена
         if (duel.status === 'finished') {
           if (shownResultFor === duel.id) return;
           shownResultFor = duel.id;
@@ -209,7 +200,6 @@
           return;
         }
 
-        // Активная дуэль — новая?
         if (shownQuestionFor !== duel.id) {
           shownQuestionFor = duel.id;
           shownResultFor = null;
@@ -217,7 +207,6 @@
           submitted = false;
         }
 
-        // Уже ответил ранее (на случай перезагрузки страницы)
         var isA = String(team.id) === String(duel.teamA.id);
         var key = isA ? 'A' : 'B';
         if (duel.answers && duel.answers[key]) {
@@ -230,7 +219,6 @@
 
         show();
 
-        // Обновляем только таймер, если вопрос уже нарисован
         var existingTimer = document.getElementById('dwTimer');
         var hasOptions = overlay.querySelector('input[name="dwAnswer"]');
         if (existingTimer && hasOptions && shownQuestionFor === duel.id) {
