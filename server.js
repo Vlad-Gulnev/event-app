@@ -34,11 +34,56 @@ function giveSpeedBonus(db, tourKey, teamId) {
   if (!db.speedBonus) db.speedBonus = { tour1: [], tour2: [], tour3: [], tour4: [] };
   if (!db.speedBonus[tourKey]) db.speedBonus[tourKey] = [];
   var arr = db.speedBonus[tourKey];
-  // Только первым двум командам в этом туре
   if (arr.indexOf(teamId) !== -1) return 0;
   if (arr.length === 0) { arr.push(teamId); return 3; }
   if (arr.length === 1) { arr.push(teamId); return 2; }
   return 0;
+}
+
+// ============================================================
+// БОНУС ЗА КАЧЕСТВО
+// ============================================================
+function computeQualityBonus(t, db) {
+  const t1 = db.tour1[t.id] || {};
+  const t2 = db.tour2[t.id] || {};
+  const t3 = db.tour3[t.id] || {};
+  const t4 = db.tour4[t.id] || {};
+
+  const bonus = {
+    t1Quiz: 0, t1Case: 0, t2: 0, t3: 0,
+    t4Objects: 0, t4Algos: 0, t4Misses: 0,
+    total: 0
+  };
+
+  // Тур 1: все 30 правильных
+  if (t1.quiz && t1.quiz.correct === 30) bonus.t1Quiz = 5;
+
+  // Тур 1: кейс 5/5
+  if (Array.isArray(t1.caseScore)) {
+    const s = t1.caseScore.reduce((a, b) => a + (Number(b) || 0), 0);
+    if (s === 5) bonus.t1Case = 3;
+  }
+
+  // Тур 2: 8/8
+  if (t2.correct === 8) bonus.t2 = 3;
+
+  // Тур 3: 10/10 (макс. 3+3+3+1)
+  if (Array.isArray(t3.score)) {
+    const s = t3.score.reduce((a, b) => a + (Number(b) || 0), 0);
+    if (s === 10) bonus.t3 = 3;
+  }
+
+  // Тур 4: все 10 объектов
+  if (t4.stage1 && t4.stage1.totalFound === 10) bonus.t4Objects = 5;
+
+  // Тур 4: все 6 алгоритмов
+  if (t4.stage1 && t4.stage1.algorithmsCorrect === 6) bonus.t4Algos = 3;
+
+  // Тур 4: 0 промахов
+  if (t4.stage1 && t4.stage1.time && t4.stage1.totalMisses === 0) bonus.t4Misses = 3;
+
+  bonus.total = bonus.t1Quiz + bonus.t1Case + bonus.t2 + bonus.t3 + bonus.t4Objects + bonus.t4Algos + bonus.t4Misses;
+  return bonus;
 }
 
 // ============================================================
@@ -47,12 +92,7 @@ function giveSpeedBonus(db, tourKey, teamId) {
 app.post('/api/timer/start', (req, res) => {
   const minutes = Number(req.body.minutes) || 15;
   const db = readDB();
-  db.timer = {
-    active: true,
-    endTime: Date.now() + minutes * 60 * 1000,
-    totalMinutes: minutes,
-    startedAt: Date.now()
-  };
+  db.timer = { active: true, endTime: Date.now() + minutes * 60 * 1000, totalMinutes: minutes, startedAt: Date.now() };
   writeDB(db);
   res.json({ ok: true, timer: db.timer });
 });
@@ -66,14 +106,7 @@ app.get('/api/timer/state', (req, res) => {
   const minutesLeft = Math.floor(msLeft / 60000);
   const secondsLeft = Math.floor((msLeft % 60000) / 1000);
   const expired = msLeft === 0;
-  res.json({
-    active: !expired,
-    expired: expired,
-    totalMinutes: t.totalMinutes,
-    minutesLeft: minutesLeft,
-    secondsLeft: secondsLeft,
-    msLeft: msLeft
-  });
+  res.json({ active: !expired, expired: expired, totalMinutes: t.totalMinutes, minutesLeft, secondsLeft, msLeft });
 });
 
 app.post('/api/timer/stop', (req, res) => {
@@ -121,8 +154,7 @@ app.post('/api/tour1/quiz', (req, res) => {
   if (!teamId) return res.status(400).json({ error: 'teamId required' });
   const db = readDB();
   if (!db.tour1[teamId]) db.tour1[teamId] = {};
-  if (db.tour1[teamId].quiz) return res.json({ ok: true, bonus: 0 }); // уже сдавал
-
+  if (db.tour1[teamId].quiz) return res.json({ ok: true, bonus: 0 });
   const bonus = giveSpeedBonus(db, 'tour1', teamId);
   db.tour1[teamId].quiz = { answers, correct, total, bonus: bonus, time: new Date().toISOString() };
   writeDB(db);
@@ -166,8 +198,8 @@ app.post('/api/tour2', (req, res) => {
 // ТУР 3
 // ============================================================
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) { cb(null, UPLOAD_DIR); },
-  filename: function (req, file, cb) {
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
     const ext = (path.extname(file.originalname) || '').toLowerCase();
     cb(null, 'team' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + ext);
   }
@@ -176,7 +208,7 @@ const ALLOWED_MIMES = ['image/jpeg','image/png','image/webp','image/gif','applic
 const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: function (req, file, cb) {
+  fileFilter: (req, file, cb) => {
     if (ALLOWED_MIMES.indexOf(file.mimetype) === -1) return cb(new Error('Недопустимый тип файла'));
     cb(null, true);
   }
@@ -186,17 +218,14 @@ app.post('/api/tour3/upload', upload.single('file'), (req, res) => {
   const { teamId, teamName, format, formatTitle, topic, topicTitle, description } = req.body;
   if (!teamId) return res.status(400).json({ error: 'teamId required' });
   const db = readDB();
-  if (db.tour3[teamId] && db.tour3[teamId].time) {
-    return res.json({ ok: true, bonus: 0, fileUrl: db.tour3[teamId].fileUrl });
-  }
+  if (db.tour3[teamId] && db.tour3[teamId].time) return res.json({ ok: true, bonus: 0, fileUrl: db.tour3[teamId].fileUrl });
   const bonus = giveSpeedBonus(db, 'tour3', teamId);
   db.tour3[teamId] = {
     teamId, teamName, format, formatTitle, topic, topicTitle, description,
     fileUrl: req.file ? '/uploads/' + req.file.filename : null,
     fileName: req.file ? req.file.originalname : null,
     fileSize: req.file ? req.file.size : 0,
-    bonus: bonus,
-    time: new Date().toISOString()
+    bonus: bonus, time: new Date().toISOString()
   };
   writeDB(db);
   res.json({ ok: true, fileUrl: db.tour3[teamId].fileUrl, fileName: db.tour3[teamId].fileName, fileSize: db.tour3[teamId].fileSize, bonus: bonus });
@@ -254,7 +283,7 @@ app.post('/api/tour4/stage2', (req, res) => {
 });
 
 // ============================================================
-// АДМИН — СВОДКА
+// СВОДКА
 // ============================================================
 function computeTeamStats(t, db) {
   const t1 = db.tour1[t.id] || {};
@@ -268,9 +297,9 @@ function computeTeamStats(t, db) {
 
   let k = 1;
   if (t1.quiz && t1.quiz.total) {
-    const percent = (quiz / 30) * 100;
-    if (percent < 50) k = 1.5;
-    else if (percent <= 75) k = 1.25;
+    const p = (quiz / 30) * 100;
+    if (p < 50) k = 1.5;
+    else if (p <= 75) k = 1.25;
   }
   const quizWithK = Math.round(quiz * k * 100) / 100;
 
@@ -282,21 +311,26 @@ function computeTeamStats(t, db) {
   const t4s2 = t4.stage2Score || 0;
   const tour4Bonus = t4.bonus || 0;
 
-  const t1Total = quizWithK + caseScore + quizBonus;
-  const tour4 = t4s1 + t4s2 + tour4Bonus;
-  const grand = Math.round((t1Total + tour2 + tour2Bonus + tour3 + tour3Bonus + tour4) * 100) / 100;
+  const quality = computeQualityBonus(t, db);
+
+  const speedBonusTotal = quizBonus + tour2Bonus + tour3Bonus + tour4Bonus;
+  const t1Total = Math.round((quizWithK + caseScore + quizBonus + quality.t1Quiz + quality.t1Case) * 100) / 100;
+  const tour4 = t4s1 + t4s2 + tour4Bonus + quality.t4Objects + quality.t4Algos + quality.t4Misses;
+  const grand = Math.round((t1Total + tour2 + tour2Bonus + quality.t2 + tour3 + tour3Bonus + quality.t3 + tour4) * 100) / 100;
 
   return {
     id: t.id, name: t.name, token: t.token, caseId: t.caseId,
     emoji: t.emoji || '🛡', color: t.color || '#157fc4',
-    t1Quiz: { correct: quiz, correctK: quizWithK, coefficient: k, total: 30, bonus: quizBonus, time: (t1.quiz && t1.quiz.time) || null },
-    t1Case: { title: (t1.kase && t1.kase.caseTitle) || null, answer: (t1.kase && t1.kase.answer) || null, time: (t1.kase && t1.kase.time) || null, score: t1.caseScore || [0,0,0] },
+    t1Quiz: { correct: quiz, correctK: quizWithK, coefficient: k, total: 30, bonus: quizBonus, quality: quality.t1Quiz, time: (t1.quiz && t1.quiz.time) || null },
+    t1Case: { title: (t1.kase && t1.kase.caseTitle) || null, answer: (t1.kase && t1.kase.answer) || null, time: (t1.kase && t1.kase.time) || null, score: t1.caseScore || [0,0,0], quality: quality.t1Case },
     t1Total: Math.round(t1Total * 100) / 100,
-    t2: { correct: tour2, total: 8, bonus: tour2Bonus, time: t2.time || null },
-    t3: { formatTitle: t3.formatTitle, topicTitle: t3.topicTitle, description: t3.description, link: t3.link, fileUrl: t3.fileUrl, fileName: t3.fileName, time: t3.time, bonus: tour3Bonus, score: t3.score || [0,0,0,0] },
-    t3Total: tour3 + tour3Bonus,
-    t4: { stage1: t4.stage1 || null, stage2: t4.stage2 || null, stage2Score: t4s2, bonus: tour4Bonus, time: t4.time },
+    t2: { correct: tour2, total: 8, bonus: tour2Bonus, quality: quality.t2, time: t2.time || null },
+    t3: { formatTitle: t3.formatTitle, topicTitle: t3.topicTitle, description: t3.description, link: t3.link, fileUrl: t3.fileUrl, fileName: t3.fileName, time: t3.time, bonus: tour3Bonus, quality: quality.t3, score: t3.score || [0,0,0,0] },
+    t3Total: tour3 + tour3Bonus + quality.t3,
+    t4: { stage1: t4.stage1 || null, stage2: t4.stage2 || null, stage2Score: t4s2, bonus: tour4Bonus, quality: { objects: quality.t4Objects, algos: quality.t4Algos, misses: quality.t4Misses, total: quality.t4Objects + quality.t4Algos + quality.t4Misses }, time: t4.time },
     t4Total: tour4,
+    speedBonusTotal: speedBonusTotal,
+    qualityTotal: quality.total,
     grand: grand
   };
 }
@@ -335,7 +369,7 @@ app.post('/api/admin/clear-all', (req, res) => {
   res.json({ ok: true });
 });
 
-app.use(function (err, req, res, next) {
+app.use((err, req, res, next) => {
   if (err) return res.status(400).json({ error: err.message || 'Ошибка загрузки' });
   next();
 });

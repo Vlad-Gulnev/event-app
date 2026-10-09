@@ -54,6 +54,7 @@
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
 .badge-bonus{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#fff3cd;color:#856404;margin-left:6px}
 .badge-bonus.gold{background:#ffe082;color:#664d03}
+.badge-quality{display:inline-block;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:#e6f4ea;color:#1f6d2f;margin-left:4px}
 </style>
 </head>
 <body>
@@ -79,6 +80,7 @@
     <p style="color:var(--muted);font-size:14px;">Данные на сервере. Обновление каждые 5 секунд.</p>
     <div class="big-actions">
       <button class="btn btn-primary" onclick="openLeaderboard()" style="font-size:16px;padding:12px 24px;font-weight:700;">📺 Открыть лидерборд</button>
+      <button class="btn btn-primary" onclick="openMap()" style="font-size:16px;padding:12px 24px;font-weight:700;background:#2e7d32;">🗺 Карта мероприятия</button>
       <button class="btn-fanfare" onclick="playFanfare()">🎺 Фанфара</button>
       <button class="btn-fanfare" onclick="playTruckHorn()" style="background:linear-gradient(90deg,#5d4037,#c8102e);">🚛 Гудок камаза</button>
     </div>
@@ -122,9 +124,9 @@
 
   <div class="tab-pane" id="tab-tour1">
     <div class="card">
-      <h2>Тур 1. Квиз <small style="color:var(--muted);font-weight:400;font-size:14px;">(с коэффициентом для слабых и бонусом за скорость)</small></h2>
+      <h2>Тур 1. Квиз <small style="color:var(--muted);font-weight:400;font-size:14px;">(коэф. для слабых + бонусы)</small></h2>
       <table class="table" id="tour1QuizTbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Сырой</th><th>Коэф.</th><th>С коэф.</th><th>Бонус</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Сырой</th><th>Коэф.</th><th>С коэф.</th><th>Спид</th><th>Идеал</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -138,7 +140,7 @@
     <div class="card">
       <h2>Тур 2. Психологический иммунитет</h2>
       <table class="table" id="tour2Tbl">
-        <thead><tr><th>#</th><th>Команда</th><th>Балл</th><th>Бонус</th><th>Время</th></tr></thead>
+        <thead><tr><th>#</th><th>Команда</th><th>Балл</th><th>Спид</th><th>Идеал</th><th>Время</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -165,11 +167,13 @@
   <div class="tab-pane" id="tab-summary">
     <div class="card">
       <h2>Сводная таблица</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">🎯 Спид — бонус за скорость (первым двум). 🌟 Качество — бонусы за идеальные результаты.</p>
       <table class="table" id="tbl">
         <thead><tr>
           <th>#</th><th>Команда</th>
           <th>Т1 квиз</th><th>Т1 кейс</th><th>Т1 итого</th>
-          <th>Т2</th><th>Т3</th><th>Т4</th><th>Общий</th>
+          <th>Т2</th><th>Т3</th><th>Т4</th>
+          <th>🎯 Спид</th><th>🌟 Качество</th><th>Общий</th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -261,18 +265,17 @@ function fallbackCopy(text){
   document.body.removeChild(ta);
 }
 
-function bonusBadge(bonus){
-  if (!bonus) return '';
-  return '<span class="badge-bonus gold">🎯 +' + bonus + '</span>';
-}
+function speedBadge(bonus){ if (!bonus) return ''; return '<span class="badge-bonus gold">🎯 +' + bonus + '</span>'; }
+function qualityBadge(bonus){ if (!bonus) return ''; return '<span class="badge-quality">🌟 +' + bonus + '</span>'; }
 
 function renderTour1Quiz(){
   var tbody = document.querySelector('#tour1QuizTbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="7">Нет команд.</td></tr>'; return; }
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="8">Нет команд.</td></tr>'; return; }
   var rows = allData.teams.map(function(t){ return {
     name: t.name, emoji: t.emoji, color: t.color,
-    raw: t.t1Quiz.correct, k: t.t1Quiz.coefficient, kd: t.t1Quiz.correctK, bonus: t.t1Quiz.bonus,
+    raw: t.t1Quiz.correct, k: t.t1Quiz.coefficient, kd: t.t1Quiz.correctK,
+    bonus: t.t1Quiz.bonus, quality: t.t1Quiz.quality,
     time: t.t1Quiz.time, done: !!t.t1Quiz.time
   }; });
   rows.sort(function(a,b){ return b.kd - a.kd; });
@@ -287,7 +290,8 @@ function renderTour1Quiz(){
       '<td>'+(r.done ? r.raw + ' / 30' : '—')+'</td>' +
       '<td>'+(r.done ? kLabel : '—')+'</td>' +
       '<td><b>'+(r.done ? r.kd : '—')+'</b></td>' +
-      '<td>'+(r.done ? bonusBadge(r.bonus) : '—')+'</td>' +
+      '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
+      '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
   });
@@ -300,7 +304,7 @@ function renderCases(){
   allData.teams.forEach(function(t){
     var parts = t.t1Case.score || [0,0,0];
     var html = '<div class="case-block">' +
-      '<h4>' + t.emoji + ' ' + t.name + '</h4>' +
+      '<h4>' + t.emoji + ' ' + t.name + (t.t1Case.quality ? ' ' + qualityBadge(t.t1Case.quality) : '') + '</h4>' +
       '<p><b>Кейс:</b> ' + (t.t1Case.title || CASES_META[t.caseId] || '—') + '</p>';
     if (t.t1Case.answer) {
       html += '<p><b>Ответ:</b></p><div class="case-answer">' + t.t1Case.answer.replace(/</g,'&lt;') + '</div>';
@@ -337,8 +341,8 @@ function saveCaseScore(teamId){
 function renderTour2(){
   var tbody = document.querySelector('#tour2Tbl tbody');
   tbody.innerHTML = '';
-  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="5">Нет команд.</td></tr>'; return; }
-  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, bonus:t.t2.bonus, time:t.t2.time, done:!!t.t2.time }; });
+  if (!allData.teams.length) { tbody.innerHTML='<tr><td colspan="6">Нет команд.</td></tr>'; return; }
+  var rows = allData.teams.map(function(t){ return { name:t.name, emoji:t.emoji, color:t.color, score:t.t2.correct, bonus:t.t2.bonus, quality:t.t2.quality, time:t.t2.time, done:!!t.t2.time }; });
   rows.sort(function(a,b){ return b.score - a.score; });
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
@@ -346,7 +350,8 @@ function renderTour2(){
     tr.innerHTML = '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
       '<td>'+(r.done ? '<span class="badge ok">'+r.score+' / 8</span>' : '<span class="badge">не прошёл</span>')+'</td>' +
-      '<td>'+(r.done ? bonusBadge(r.bonus) : '—')+'</td>' +
+      '<td>'+(r.done ? speedBadge(r.bonus) : '—')+'</td>' +
+      '<td>'+(r.done ? qualityBadge(r.quality) : '—')+'</td>' +
       '<td style="font-size:13px;color:#666;">'+(r.time ? new Date(r.time).toLocaleString('ru-RU') : '')+'</td>';
     tbody.appendChild(tr);
   });
@@ -391,7 +396,7 @@ function showWork(){
   box.innerHTML =
     '<div class="case-block">' +
       '<div class="work-header"><div>' +
-        '<h4>' + t.emoji + ' ' + t.name + bonusBadge(t.t3.bonus) + '</h4>' +
+        '<h4>' + t.emoji + ' ' + t.name + speedBadge(t.t3.bonus) + qualityBadge(t.t3.quality) + '</h4>' +
         '<p class="work-meta">Формат: <b>' + (t.t3.formatTitle||'—') + '</b> · Тема: <b>' + (t.t3.topicTitle||'—') + '</b></p>' +
       '</div><div class="score-live" id="scoreLive_'+teamId+'">Итог: '+sum+' / 10</div></div>' +
       '<p><b>Описание:</b></p><div class="case-answer">' + ((t.t3.description||'').replace(/</g,'&lt;')) + '</div>' +
@@ -461,10 +466,10 @@ function showTour4(){
   if (!t || !t.t4 || !t.t4.stage1) { box.innerHTML='<div class="tour4-block"><p>Команда ещё не играла в Тур 4.</p></div>'; return; }
   var s1 = t.t4.stage1 || {};
   var s2 = t.t4.stage2 || {};
-  var html = '<div class="tour4-block"><h4>' + t.emoji + ' ' + t.name + bonusBadge(t.t4.bonus) + '</h4>' +
-    '<div class="stat-line"><span>Найдено объектов</span><b>'+(s1.totalFound||0)+' / 10</b></div>' +
-    '<div class="stat-line"><span>Алгоритмов верно</span><b>'+(s1.algorithmsCorrect||0)+' / 6</b></div>' +
-    '<div class="stat-line"><span>Промахов</span><b>'+(s1.totalMisses||0)+'</b></div>' +
+  var html = '<div class="tour4-block"><h4>' + t.emoji + ' ' + t.name + speedBadge(t.t4.bonus) + qualityBadge(t.t4.quality.total) + '</h4>' +
+    '<div class="stat-line"><span>Найдено объектов</span><b>'+(s1.totalFound||0)+' / 10</b>'+(t.t4.quality.objects ? ' <span class="badge-quality">🌟 +'+t.t4.quality.objects+'</span>' : '')+'</div>' +
+    '<div class="stat-line"><span>Алгоритмов верно</span><b>'+(s1.algorithmsCorrect||0)+' / 6</b>'+(t.t4.quality.algos ? ' <span class="badge-quality">🌟 +'+t.t4.quality.algos+'</span>' : '')+'</div>' +
+    '<div class="stat-line"><span>Промахов</span><b>'+(s1.totalMisses||0)+'</b>'+(t.t4.quality.misses ? ' <span class="badge-quality">🌟 +'+t.t4.quality.misses+'</span>' : '')+'</div>' +
     '<div class="stat-line"><span>Время игры</span><b>'+formatTime(s1.duration||0)+'</b></div>' +
     '<div class="stat-line"><span><b>Этап 1. Очки</b></span><b>'+(s1.score||0)+'</b></div></div>';
   html += '<div class="tour4-block"><h4>Этап 2. Симулятор</h4>';
@@ -473,7 +478,7 @@ function showTour4(){
     html += '<div class="stat-line"><span>'+(SIM_TITLES[key]||key)+'</span><b>'+((s2[key]&&s2[key].score)||0)+' прав.</b></div>';
   });
   html += '<div class="stat-line" style="border-top:2px solid var(--primary);margin-top:8px;padding-top:10px;"><span><b>Этап 2. Очки</b></span><b>'+(t.t4.stage2Score||0)+'</b></div></div>';
-  html += '<div class="tour4-block" style="background:#e6f4ea;"><div class="stat-line" style="font-size:18px;"><span><b>Итого за Тур 4</b></span><b>'+t.t4Total+' / 49</b></div></div>';
+  html += '<div class="tour4-block" style="background:#e6f4ea;"><div class="stat-line" style="font-size:18px;"><span><b>Итого за Тур 4</b></span><b>'+t.t4Total+' / 58</b></div></div>';
   box.innerHTML = html;
 }
 
@@ -486,7 +491,7 @@ function renderSummary(){
   var rows = allData.teams.slice().sort(function(a,b){ return b.grand - a.grand; });
   var tbody = document.querySelector('#tbl tbody');
   tbody.innerHTML = '';
-  if (!rows.length) { tbody.innerHTML='<tr><td colspan="9">Нет команд.</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="11">Нет команд.</td></tr>'; return; }
   rows.forEach(function(r,i){
     var tr = document.createElement('tr');
     if (i===0 && rows.length>1 && r.grand>0) tr.className='leader';
@@ -494,23 +499,25 @@ function renderSummary(){
     tr.innerHTML =
       '<td>'+(i+1)+'</td>' +
       '<td><span class="team-avatar">'+r.emoji+'</span><span class="color-badge" style="background:'+r.color+';"></span>'+r.name+'</td>' +
-      '<td>'+r.t1Quiz.correctK+' / 45</td>' +
+      '<td>'+r.t1Quiz.correctK+' / 30</td>' +
       '<td>'+caseSum+' / 5</td>' +
-      '<td><b>'+r.t1Total+' / 53</b></td>' +
+      '<td><b>'+r.t1Total+' / 43</b></td>' +
       '<td>'+r.t2.correct+' / 8</td>' +
-      '<td>'+r.t3Total+' / 10</td>' +
-      '<td>'+r.t4Total+' / 49</td>' +
-      '<td><b>'+r.grand+' / 120</b></td>';
+      '<td>'+r.t3Total+' / 13</td>' +
+      '<td>'+r.t4Total+' / 58</td>' +
+      '<td>'+speedBadge(r.speedBonusTotal)+'</td>' +
+      '<td>'+qualityBadge(r.qualityTotal)+'</td>' +
+      '<td><b>'+r.grand+'</b></td>';
     tbody.appendChild(tr);
   });
 }
 
 function exportCSV(){
-  var rows = [['Место','Команда','Т1 квиз сырой','Коэф','Т1 квиз с коэф','Бонус Т1','Т1 кейс','Т1 итого','Т2','Бонус Т2','Т3','Бонус Т3','Т4','Бонус Т4','Общий']];
+  var rows = [['Место','Команда','Т1 квиз','Коэф','Т1 с коэф','Т1 кейс','Т1 итого','Т2','Т3','Т4','Спид-бонусы','Качество','Общий']];
   var s = allData.teams.slice().sort(function(a,b){ return b.grand - a.grand; });
   s.forEach(function(r,i){
     var caseSum = (r.t1Case.score||[]).reduce(function(a,b){return a+(Number(b)||0);},0);
-    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, r.t1Quiz.bonus, caseSum, r.t1Total, r.t2.correct, r.t2.bonus, r.t3Total, r.t3.bonus, r.t4Total, r.t4.bonus, r.grand]);
+    rows.push([i+1, r.name, r.t1Quiz.correct, r.t1Quiz.coefficient, r.t1Quiz.correctK, caseSum, r.t1Total, r.t2.correct, r.t3Total, r.t4Total, r.speedBonusTotal, r.qualityTotal, r.grand]);
   });
   var csv = rows.map(function(r){ return r.join(';'); }).join('\n');
   var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -524,66 +531,38 @@ function resetTour(){
   var t = prompt('Какой тур сбросить? Введите 1, 2, 3 или 4:');
   if (!t) return;
   if (!confirm('Удалить все данные Тура '+t+'?')) return;
-  fetch('/api/admin/reset-tour', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ tour: t })
-  }).then(function(){ load(); });
+  fetch('/api/admin/reset-tour', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tour: t }) }).then(function(){ load(); });
 }
 
 function clearAll(){
   if (!confirm('Удалить ВСЕ данные? Это нельзя отменить.')) return;
   if (!confirm('Точно? Это крайнее действие.')) return;
-  fetch('/api/admin/clear-all', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ confirm: 'YES' })
-  }).then(function(){ load(); });
+  fetch('/api/admin/clear-all', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ confirm: 'YES' }) }).then(function(){ load(); });
 }
 
-function openLeaderboard(){
-  window.open('leaderboard.html', '_blank');
-}
+function openLeaderboard(){ window.open('leaderboard.html', '_blank'); }
+function openMap(){ window.open('map.html', '_blank'); }
 
-// ==== ТАЙМЕР ====
 function startTimer(minutes){
-  fetch('/api/timer/start', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ minutes: minutes })
-  }).then(function(){ updateTimerStatus(); });
+  fetch('/api/timer/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ minutes: minutes }) }).then(function(){ updateTimerStatus(); });
 }
-
 function stopTimer(){
   fetch('/api/timer/stop', { method:'POST' }).then(function(){ updateTimerStatus(); });
 }
-
 function updateTimerStatus(){
-  fetch('/api/timer/state')
-    .then(function(r){ return r.json(); })
-    .then(function(t){
-      var el = document.getElementById('timerStatus');
-      if (!t.active && !t.expired) {
-        el.className = 'timer-status';
-        el.textContent = '— не активен —';
-        return;
-      }
-      if (t.expired) {
-        el.className = 'timer-status expired';
-        el.textContent = '⏰ ВРЕМЯ ВЫШЛО';
-        return;
-      }
-      var mm = (t.minutesLeft < 10 ? '0' : '') + t.minutesLeft;
-      var ss = (t.secondsLeft < 10 ? '0' : '') + t.secondsLeft;
-      el.className = 'timer-status active';
-      el.textContent = '⏱ ' + mm + ':' + ss + ' из ' + t.totalMinutes + ' мин';
-    })
-    .catch(function(){});
+  fetch('/api/timer/state').then(function(r){ return r.json(); }).then(function(t){
+    var el = document.getElementById('timerStatus');
+    if (!t.active && !t.expired) { el.className = 'timer-status'; el.textContent = '— не активен —'; return; }
+    if (t.expired) { el.className = 'timer-status expired'; el.textContent = '⏰ ВРЕМЯ ВЫШЛО'; return; }
+    var mm = (t.minutesLeft < 10 ? '0' : '') + t.minutesLeft;
+    var ss = (t.secondsLeft < 10 ? '0' : '') + t.secondsLeft;
+    el.className = 'timer-status active';
+    el.textContent = '⏱ ' + mm + ':' + ss + ' из ' + t.totalMinutes + ' мин';
+  }).catch(function(){});
 }
 
-// ==== ЗВУК ====
 var audioCtx = null;
-function initAudio() {
-  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
-  return audioCtx;
-}
+function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return audioCtx; }
 
 function playFanfare(){
   try {
