@@ -68,7 +68,7 @@ var team = null;
 
 var tours = [
   { num: 1, title: 'Правовой щит', desc: 'Квиз из 30 вопросов + ситуационный кейс', href: 'play.html', ready: true },
-  { num: 2, title: 'Психологический иммунитет', desc: 'Разбор манипуляций + ситуационные задачи', href: 'play2.html', ready: true },
+  { num: 2, title: 'Психологический иммунитет', desc: 'Разбор манипуляций + ситуационные задачи', href: 'play2.html', ready: true, locked: true },
   { num: 3, title: 'Контент-баттл', desc: 'Командный хакатон по созданию профилактического контента', href: 'play3.html', ready: true },
   { num: 4, title: 'Найди опасность', desc: 'Игра-детектив: найди опасные объекты и собери алгоритм действий', href: 'play4.html', ready: true, badge: '🎮 Игра-детектив' }
 ];
@@ -126,7 +126,7 @@ function loadStatuses() {
           '<div class="tour-body">' +
             '<h3>Тур ' + t.num + '. ' + t.title + ' ' + statusHtml + badgeHtml + '</h3>' +
             '<p>' + t.desc + '</p>' +
-            '<div class="tour-actions"><a class="btn btn-primary" href="' + link + '">' + (done ? 'Открыть заново' : 'Начать') + ' →</a></div>' +
+            '<div class="tour-actions">' + (t.locked ? '<button class="btn btn-secondary" disabled style="opacity:0.55;cursor:not-allowed;">🔒 Только через дуэли</button>' : '<a class="btn btn-primary" href="' + link + '">' + (done ? 'Открыть заново' : 'Начать') + ' →</a>') + '</div>' +
           '</div>';
         box.appendChild(card);
       });
